@@ -37,10 +37,10 @@ import (
 
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
-	gceconfig "k8s.io/kube-deploy/cluster-api-gcp/cloud/google/gceproviderconfig"
-	gceconfigv1 "k8s.io/kube-deploy/cluster-api-gcp/cloud/google/gceproviderconfig/v1alpha1"
-	apierrors "k8s.io/kube-deploy/cluster-api-gcp/errors"
-	"k8s.io/kube-deploy/cluster-api-gcp/util"
+	gceconfig "k8s.io/kube-deploy/cluster-api-bosh/cloud/google/gceproviderconfig"
+	gceconfigv1 "k8s.io/kube-deploy/cluster-api-bosh/cloud/google/gceproviderconfig/v1alpha1"
+	apierrors "k8s.io/kube-deploy/cluster-api-bosh/errors"
+	"k8s.io/kube-deploy/cluster-api-bosh/util"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
 )
 

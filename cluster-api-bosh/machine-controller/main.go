@@ -26,7 +26,7 @@ import (
 	"k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 
-	"k8s.io/kube-deploy/cluster-api-gcp/machine-controller/controller"
+	"k8s.io/kube-deploy/cluster-api-bosh/machine-controller/controller"
 )
 
 func main() {

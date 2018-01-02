@@ -24,11 +24,11 @@ import (
 	"io/ioutil"
 	"k8s.io/apiserver/pkg/util/logs"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
-	"k8s.io/kube-deploy/cluster-api-gcp/util"
+	"k8s.io/kube-deploy/cluster-api-bosh/util"
 )
 
 var RootCmd = &cobra.Command{
-	Use:   "cluster-api-gcp",
+	Use:   "cluster-api-bosh",
 	Short: "cluster management",
 	Long:  `Simple kubernetes cluster management`,
 	Run: func(cmd *cobra.Command, args []string) {

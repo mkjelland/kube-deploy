@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
-	"k8s.io/kube-deploy/cluster-api-gcp/util"
+	"k8s.io/kube-deploy/cluster-api-bosh/util"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 

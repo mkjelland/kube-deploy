@@ -23,7 +23,7 @@ import (
 
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
-	"k8s.io/kube-deploy/cluster-api-gcp/cloud/google"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/google"
 )
 
 // An actuator that just logs instead of doing anything.

@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
-	"k8s.io/kube-deploy/cluster-api-gcp/util"
+	"k8s.io/kube-deploy/cluster-api-bosh/util"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
 )
 

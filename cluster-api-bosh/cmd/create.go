@@ -21,7 +21,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"k8s.io/kube-deploy/cluster-api-gcp/deploy"
+	"k8s.io/kube-deploy/cluster-api-bosh/deploy"
 )
 
 type CreateOptions struct {

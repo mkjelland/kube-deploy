@@ -1,6 +1,6 @@
 # Cluster API GCP Prototype
 
-The Cluster API GCP prototype implements the [Cluster API][https://github.com/kubernetes/kube-deploy/blob/master/cluster-api-gcp/README.md] for GCP.
+The Cluster API GCP prototype implements the [Cluster API][https://github.com/kubernetes/kube-deploy/blob/master/cluster-api-bosh/README.md] for GCP.
 
 ## Getting Started
 ### Prerequisites
@@ -14,7 +14,7 @@ The Cluster API GCP prototype implements the [Cluster API][https://github.com/ku
 ```bash
 $ cd $GOPATH/src/k8s.io/
 $ git clone git@github.com:kubernetes/kube-deploy.git
-$ cd kube-deploy/cluster-api-gcp
+$ cd kube-deploy/cluster-api-bosh
 $ go build
 ```
 
@@ -25,8 +25,8 @@ $ go build
 each machine's `providerConfig` field.
    - *Optional*: Update the `cluster.yaml` file to change the cluster name.
 3. Run `gcloud auth application-default login` to get default credentials.
-4. Create a cluster: `./cluster-api-gcp create -c cluster.yaml -m machines.yaml`
-5. Delete that cluster: `./cluster-api-gcp delete`
+4. Create a cluster: `./cluster-api-bosh create -c cluster.yaml -m machines.yaml`
+5. Delete that cluster: `./cluster-api-bosh delete`
 
 ### How does the prototype work?
 

@@ -21,7 +21,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"k8s.io/kube-deploy/cluster-api-gcp/cloud/google"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/google"
 )
 
 type options struct {

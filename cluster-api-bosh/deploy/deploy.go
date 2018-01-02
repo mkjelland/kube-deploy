@@ -22,8 +22,8 @@ import (
 	"github.com/golang/glog"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
-	"k8s.io/kube-deploy/cluster-api-gcp/cloud"
-	"k8s.io/kube-deploy/cluster-api-gcp/util"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud"
+	"k8s.io/kube-deploy/cluster-api-bosh/util"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
 )
 
