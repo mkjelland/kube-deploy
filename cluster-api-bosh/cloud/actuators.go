@@ -23,7 +23,7 @@ import (
 
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
-	"k8s.io/kube-deploy/cluster-api-bosh/cloud/google"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh"
 )
 
 // An actuator that just logs instead of doing anything.
@@ -38,7 +38,7 @@ preferences: {}
 func NewMachineActuator(cloud string, kubeadmToken string, machineClient client.MachinesInterface) (MachineActuator, error) {
 	switch cloud {
 	case "google":
-		return google.NewMachineActuator(kubeadmToken, machineClient)
+		return bosh.NewMachineActuator(kubeadmToken, machineClient)
 	case "test", "aws", "azure":
 		return &loggingMachineActuator{}, nil
 	default:

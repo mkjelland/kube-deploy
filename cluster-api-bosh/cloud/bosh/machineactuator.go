@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package google
+package bosh
 
 import (
 	"bytes"
@@ -37,8 +37,8 @@ import (
 
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
-	gceconfig "k8s.io/kube-deploy/cluster-api-bosh/cloud/google/gceproviderconfig"
-	gceconfigv1 "k8s.io/kube-deploy/cluster-api-bosh/cloud/google/gceproviderconfig/v1alpha1"
+	gceconfig "k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/gceproviderconfig"
+	gceconfigv1 "k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/gceproviderconfig/v1alpha1"
 	apierrors "k8s.io/kube-deploy/cluster-api-bosh/errors"
 	"k8s.io/kube-deploy/cluster-api-bosh/util"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"

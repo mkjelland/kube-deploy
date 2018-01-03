@@ -21,7 +21,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"k8s.io/kube-deploy/cluster-api-bosh/cloud/google"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh"
 )
 
 type options struct {
@@ -53,9 +53,9 @@ func runGenerate(o options) error {
 	var err error
 	switch o.role {
 	case "master":
-		script, err = google.PreloadMasterScript(o.version, o.dockerImages)
+		script, err = bosh.PreloadMasterScript(o.version, o.dockerImages)
 	case "node":
-		script, err = google.PreloadMasterScript(o.version, o.dockerImages)
+		script, err = bosh.PreloadMasterScript(o.version, o.dockerImages)
 	default:
 		return fmt.Errorf("unrecognized role: %q", o.role)
 	}
