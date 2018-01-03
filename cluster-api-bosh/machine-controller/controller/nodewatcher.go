@@ -112,22 +112,21 @@ func (c *NodeWatcher) link(node *corev1.Node) {
 		return
 	}
 
-	if val, ok := node.ObjectMeta.Annotations["machine"]; ok {
-		machine, err := c.machineClient.Get(val, metav1.GetOptions{})
-		if err != nil {
-			glog.Errorf("Error getting machine %v: %v\n", val, err)
-			return
-		}
+	val := node.ObjectMeta.Name
+	machine, err := c.machineClient.Get(val, metav1.GetOptions{})
+	if err != nil {
+		glog.Errorf("Error getting machine %v: %v\n", val, err)
+		return
+	}
 
-		machine.Status.NodeRef = objectRef(node)
+	machine.Status.NodeRef = objectRef(node)
 
-		if _, err := c.machineClient.Update(machine); err != nil {
-			glog.Errorf("Error updating machine to link to node: %v\n", err)
-		} else {
-			glog.Infof("Successfully linked machine %s to node %s\n",
-				machine.ObjectMeta.Name, node.ObjectMeta.Name)
-			c.linkedNodes[node.ObjectMeta.Name] = true
-		}
+	if _, err := c.machineClient.Update(machine); err != nil {
+		glog.Errorf("Error updating machine to link to node: %v\n", err)
+	} else {
+		glog.Infof("Successfully linked machine %s to node %s\n",
+			machine.ObjectMeta.Name, node.ObjectMeta.Name)
+		c.linkedNodes[node.ObjectMeta.Name] = true
 	}
 }
 
