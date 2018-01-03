@@ -21,9 +21,13 @@ import (
 )
 
 type Configuration struct {
-	Kubeconfig   string
-	Cloud        string
-	KubeadmToken string
+	Kubeconfig      string
+	Cloud           string
+	KubeadmToken    string
+	UaaURL          string
+	DirectorURL     string
+	UaaClient       string
+	UaaClientSecret string
 }
 
 func NewConfiguration() *Configuration {
@@ -34,4 +38,8 @@ func (c *Configuration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "Path to kubeconfig file with authorization and master location information.")
 	fs.StringVar(&c.Cloud, "cloud", c.Cloud, "Cloud provider (google/azure).")
 	fs.StringVar(&c.KubeadmToken, "token", c.KubeadmToken, "Kubeadm token to use to join new machines.")
+	fs.StringVar(&c.UaaURL, "UaaURL", c.UaaURL, "Kubeadm token to use to join new machines.")
+	fs.StringVar(&c.DirectorURL, "DirectorURL", c.DirectorURL, "Kubeadm token to use to join new machines.")
+	fs.StringVar(&c.UaaClient, "UaaClient", c.UaaClient, "Kubeadm token to use to join new machines.")
+	fs.StringVar(&c.UaaClientSecret, "UaaClientSecret", c.UaaClientSecret, "Kubeadm token to use to join new machines.")
 }

@@ -29,11 +29,15 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
-	"k8s.io/kube-deploy/cluster-api/client"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud"
 	"k8s.io/kube-deploy/cluster-api-bosh/util"
+	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
+	"k8s.io/kube-deploy/cluster-api/client"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
+
+	boshdir "github.com/cloudfoundry/bosh-cli/director"
+	boshuaa "github.com/cloudfoundry/bosh-cli/uaa"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 type MachineController struct {
@@ -88,6 +92,35 @@ func NewMachineController(config *Configuration) *MachineController {
 	}
 }
 
+func buildUAA(c *Configuration) (boshuaa.UAA, error) {
+	logger := boshlog.NewLogger(boshlog.LevelError)
+	factory := boshuaa.NewFactory(logger)
+
+	config, err := boshuaa.NewConfigFromURL(c.UaaURL)
+	if err != nil {
+		return nil, err
+	}
+
+	config.Client = c.UaaClient
+	config.ClientSecret = c.UaaClientSecret
+
+	return factory.New(config)
+}
+
+func buildDirector(uaa boshuaa.UAA, c *Configuration) (boshdir.Director, error) {
+	logger := boshlog.NewLogger(boshlog.LevelError)
+	factory := boshdir.NewFactory(logger)
+
+	config, err := boshdir.NewConfigFromURL(c.DirectorURL)
+	if err != nil {
+		return nil, err
+	}
+
+	config.TokenFunc = boshuaa.NewClientTokenSession(uaa).TokenFunc
+
+	return factory.New(config, boshdir.NewNoopTaskReporter(), boshdir.NewNoopFileReporter())
+}
+
 func (c *MachineController) Run() error {
 	glog.Infof("Running ...")
 
@@ -122,7 +155,7 @@ func (c *MachineController) onAdd(obj interface{}) {
 	machine := obj.(*clusterv1.Machine)
 	glog.Infof("machine object created: %s\n", machine.ObjectMeta.Name)
 
-	c.runner.runAsync(machine.ObjectMeta.Name, func(){
+	c.runner.runAsync(machine.ObjectMeta.Name, func() {
 		err := c.reconcile(machine)
 		if err != nil {
 			glog.Errorf("processing machine object %s create failed: %v", machine.ObjectMeta.Name, err)
@@ -137,8 +170,8 @@ func (c *MachineController) onUpdate(oldObj, newObj interface{}) {
 	newMachine := newObj.(*clusterv1.Machine)
 	glog.Infof("machine object updated: %s\n", oldMachine.ObjectMeta.Name)
 
-	c.runner.runAsync(newMachine.ObjectMeta.Name, func(){
-		err := 	c.reconcile(newMachine)
+	c.runner.runAsync(newMachine.ObjectMeta.Name, func() {
+		err := c.reconcile(newMachine)
 		if err != nil {
 			glog.Errorf("processing machine object %s update failed: %v", newMachine.ObjectMeta.Name, err)
 		} else {
@@ -155,7 +188,7 @@ func (c *MachineController) onDelete(obj interface{}) {
 		return
 	}
 
-	c.runner.runAsync(machine.ObjectMeta.Name, func(){
+	c.runner.runAsync(machine.ObjectMeta.Name, func() {
 		err := c.reconcile(machine)
 		if err != nil {
 			glog.Errorf("processing machine object %s delete failed: %v", machine.ObjectMeta.Name, err)
