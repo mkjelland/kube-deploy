@@ -25,15 +25,15 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// Manifest represents a BOSH manifest
-type Manifest struct {
+// manifest represents a BOSH manifest
+type manifest struct {
 	Name           string
 	Update         interface{}
 	Networks       []interface{}
 	ResourcePools  []interface{} `yaml:"resource_pools"`
 	DiskPools      []interface{} `yaml:"disk_pools"`
-	Jobs           []Job
-	InstanceGroups []Job `yaml:"instance_groups"`
+	Jobs           []job
+	InstanceGroups []job `yaml:"instance_groups"`
 	Properties     map[interface{}]interface{}
 	Tags           map[string]string
 	Features       map[interface{}]interface{}
@@ -42,8 +42,8 @@ type Manifest struct {
 	Variables      []map[string]interface{}
 }
 
-// Job represents a definition of a BOSH Job or Instance Group
-type Job struct {
+// job represents a definition of a BOSH job or Instance Group
+type job struct {
 	Name               string
 	Instances          int
 	Lifecycle          string
@@ -60,17 +60,17 @@ type Job struct {
 	AvailbilityZones   []interface{} `yaml:"azs"`
 }
 
-// Parse hydrates a Manifest from a string containing a YAML manifest
+// Parse hydrates a manifest from a string containing a YAML manifest
 // Strict parsing is used to ensure no data loss
-func Parse(val string) (*Manifest, error) {
-	parsed := &Manifest{}
+func Parse(val string) (*manifest, error) {
+	parsed := &manifest{}
 	return parsed, yaml.UnmarshalStrict([]byte(val), parsed)
 }
 
 // findInstanceGroupsByType returns all matching instance groups denoted
 // by the same prefix
-func (m *Manifest) findInstanceGroupsByType(name string) []Job {
-	var jobs []Job
+func (m *manifest) findInstanceGroupsByType(name string) []job {
+	var jobs []job
 
 	for _, job := range m.InstanceGroups {
 		if strings.HasPrefix(job.Name, name) {
@@ -93,25 +93,33 @@ func randStr(n int) string {
 
 // duplicateInstanceGroup duplicates an instance group by finding the
 // first matching instance group containing `name` and adding a random suffix
-func (m *Manifest) duplicateInstanceGroup(name string) (string, error) {
+func (m *manifest) duplicateInstanceGroup(name string) (job, error) {
 	templates := m.findInstanceGroupsByType(name)
 	if len(templates) == 0 {
-		return "", fmt.Errorf("can not find template for: %s", name)
+		return job{}, fmt.Errorf("can not find template for: %s", name)
 	}
 	template := templates[0]
 	template.Name = fmt.Sprintf("%s_%i_%s", name, len(templates), randStr(5))
-	m.InstanceGroups = append(m.InstanceGroups, template)
-	return template.Name, nil
+	return template, nil
 }
 
-// AddWorker adds a new Worker instance group to the Manifest and returns the instance group name
-func (m *Manifest) AddWorker() (string, error) {
-	return m.duplicateInstanceGroup("worker")
+// AddWorker adds a new Worker instance group to the manifest and returns the instance group name
+func (m *manifest) AddWorker() (string, error) {
+	worker, err := m.duplicateInstanceGroup("worker")
+	if err != nil {
+		return "", err
+	}
+
+	// A single instance allows lookup of VM CID -> Instance Group to enable deletion of a specific VM
+	worker.Instances = 1
+	m.InstanceGroups = append(m.InstanceGroups, worker)
+
+	return worker.Name, nil
 }
 
 // DeleteWorker removes a Worker instance by instance group name
-func (m *Manifest) DeleteWorker(name string) error {
-	var jobs []Job
+func (m *manifest) DeleteWorker(name string) error {
+	var jobs []job
 	for _, j := range m.InstanceGroups {
 		if j.Name != name {
 			jobs = append(jobs, j)
