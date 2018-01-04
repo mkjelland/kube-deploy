@@ -38,9 +38,9 @@ func NewConfiguration() *Configuration {
 }
 
 func (c *Configuration) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "Path to kubeconfig file with authorization and master location information.")
-	fs.StringVar(&c.Cloud, "cloud", c.Cloud, "Cloud provider (google/azure).")
 	fs.StringVar(&c.KubeadmToken, "token", c.KubeadmToken, "Kubeadm token to use to join new machines.")
+	c.Kubeconfig = os.Getenv("Kubeconfig")
+	c.Cloud = os.Getenv("cloud")
 	c.BOSHDirectorURL = os.Getenv("BOSHDirectorURL")
 	c.UaaURL = os.Getenv("UaaURL")
 	c.UaaClient = os.Getenv("UaaClient")
