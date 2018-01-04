@@ -17,6 +17,8 @@ limitations under the License.
 package controller
 
 import (
+	"os"
+
 	"github.com/spf13/pflag"
 )
 
@@ -24,10 +26,11 @@ type Configuration struct {
 	Kubeconfig      string
 	Cloud           string
 	KubeadmToken    string
+	BOSHDirectorURL string
 	UaaURL          string
-	DirectorURL     string
 	UaaClient       string
 	UaaClientSecret string
+	UAACACert       string
 }
 
 func NewConfiguration() *Configuration {
@@ -38,8 +41,9 @@ func (c *Configuration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "Path to kubeconfig file with authorization and master location information.")
 	fs.StringVar(&c.Cloud, "cloud", c.Cloud, "Cloud provider (google/azure).")
 	fs.StringVar(&c.KubeadmToken, "token", c.KubeadmToken, "Kubeadm token to use to join new machines.")
-	fs.StringVar(&c.UaaURL, "UaaURL", c.UaaURL, "Kubeadm token to use to join new machines.")
-	fs.StringVar(&c.DirectorURL, "DirectorURL", c.DirectorURL, "Kubeadm token to use to join new machines.")
-	fs.StringVar(&c.UaaClient, "UaaClient", c.UaaClient, "Kubeadm token to use to join new machines.")
-	fs.StringVar(&c.UaaClientSecret, "UaaClientSecret", c.UaaClientSecret, "Kubeadm token to use to join new machines.")
+	c.BOSHDirectorURL = os.Getenv("BOSHDirectorURL")
+	c.UaaURL = os.Getenv("UaaURL")
+	c.UaaClient = os.Getenv("UaaClient")
+	c.UaaClientSecret = os.Getenv("UaaClientSecret")
+	c.UAACACert = os.Getenv("UAACACert")
 }

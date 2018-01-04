@@ -42,6 +42,7 @@ import (
 
 type MachineController struct {
 	config        *Configuration
+	director      boshdir.Director
 	restClient    *rest.RESTClient
 	kubeClientSet *kubernetes.Clientset
 	clusterClient *client.ClusterAPIV1Alpha1Client
@@ -64,6 +65,16 @@ func NewMachineController(config *Configuration) *MachineController {
 
 	clusterClient := client.New(restClient)
 
+	uaa, err := buildUAA(config)
+	if err != nil {
+		glog.Fatalf("error building UAA client: %v", err)
+	}
+
+	director, err := buildDirector(uaa, config)
+	if err != nil {
+		glog.Fatalf("error building BOSH director client: %v", err)
+	}
+
 	machineClient, err := machineClient(config.Kubeconfig)
 	if err != nil {
 		glog.Fatalf("error creating machine client: %v", err)
@@ -82,6 +93,7 @@ func NewMachineController(config *Configuration) *MachineController {
 
 	return &MachineController{
 		config:        config,
+		director:      director,
 		restClient:    restClient,
 		kubeClientSet: kubeClientSet,
 		clusterClient: clusterClient,
@@ -103,6 +115,7 @@ func buildUAA(c *Configuration) (boshuaa.UAA, error) {
 
 	config.Client = c.UaaClient
 	config.ClientSecret = c.UaaClientSecret
+	config.CACert = c.UAACACert
 
 	return factory.New(config)
 }
@@ -111,11 +124,12 @@ func buildDirector(uaa boshuaa.UAA, c *Configuration) (boshdir.Director, error) 
 	logger := boshlog.NewLogger(boshlog.LevelError)
 	factory := boshdir.NewFactory(logger)
 
-	config, err := boshdir.NewConfigFromURL(c.DirectorURL)
+	config, err := boshdir.NewConfigFromURL(c.BOSHDirectorURL)
 	if err != nil {
 		return nil, err
 	}
 
+	config.CACert = c.UAACACert
 	config.TokenFunc = boshuaa.NewClientTokenSession(uaa).TokenFunc
 
 	return factory.New(config, boshdir.NewNoopTaskReporter(), boshdir.NewNoopFileReporter())
