@@ -45,5 +45,5 @@ func (c *Configuration) AddFlags(fs *pflag.FlagSet) {
 	c.UaaURL = os.Getenv("UaaURL")
 	c.UaaClient = os.Getenv("UaaClient")
 	c.UaaClientSecret = os.Getenv("UaaClientSecret")
-	c.UaaCACert = os.Getenv("UAACACert")
+	c.UaaCACert = os.Getenv("UaaCACert")
 }
