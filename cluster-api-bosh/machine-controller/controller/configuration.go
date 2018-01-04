@@ -30,7 +30,7 @@ type Configuration struct {
 	UaaURL          string
 	UaaClient       string
 	UaaClientSecret string
-	UAACACert       string
+	UaaCACert       string
 }
 
 func NewConfiguration() *Configuration {
@@ -45,5 +45,5 @@ func (c *Configuration) AddFlags(fs *pflag.FlagSet) {
 	c.UaaURL = os.Getenv("UaaURL")
 	c.UaaClient = os.Getenv("UaaClient")
 	c.UaaClientSecret = os.Getenv("UaaClientSecret")
-	c.UAACACert = os.Getenv("UAACACert")
+	c.UaaCACert = os.Getenv("UAACACert")
 }

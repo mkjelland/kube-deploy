@@ -1,9 +1,9 @@
-FROM alpine:3.6
+FROM ubuntu:14.04
 
-RUN apk update && apk add openssh-client bash
+RUN apt-get update && apt-get -y install openssh-client bash
 RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 
 RUN echo "UserKnownHostsFile /dev/null" >> /etc/ssh/ssh_config
 ADD machine-controller /bin
 
-ENTRYPOINT ["/bin/machine-controller"]
+ENTRYPOINT "/bin/machine-controller"

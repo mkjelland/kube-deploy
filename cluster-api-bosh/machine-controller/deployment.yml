@@ -1,0 +1,39 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: machine-controller
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: machine-controller
+      labels:
+        app: machine-controller
+    spec:
+      containers:
+      - name: machine-controller
+        env:
+          - name: Kubeconfig
+            value: "/kube/config"
+          - name: cloud
+            value: "google"
+          - name: BOSHDirectorURL
+            value: <IP address of your BOSH director>
+          - name: UaaURL
+            value: <URL to reach UAA>
+          - name: UaaClient
+            value: <Client to use to authenticate with UAA>
+          - name: UaaClientSecret
+            value: <Client Secret to use to authenticate with UAA>
+          - name: UaaCACert
+            value: <CA Cert to use to authenticate with UAA>
+        volumeMounts:
+        - name: kubeconfig
+          mountPath: "/kube"
+          readOnly: true
+        image: <Your Dockerhub ID>/machinecontroller:latest
+      volumes:
+      - name: kubeconfig
+        secret:
+          secretName: kubeconfig

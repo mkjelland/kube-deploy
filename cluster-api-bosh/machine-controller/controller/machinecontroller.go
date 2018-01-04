@@ -115,7 +115,7 @@ func buildUAA(c *Configuration) (boshuaa.UAA, error) {
 
 	config.Client = c.UaaClient
 	config.ClientSecret = c.UaaClientSecret
-	config.CACert = c.UAACACert
+	config.CACert = c.UaaCACert
 
 	return factory.New(config)
 }
@@ -129,7 +129,7 @@ func buildDirector(uaa boshuaa.UAA, c *Configuration) (boshdir.Director, error) 
 		return nil, err
 	}
 
-	config.CACert = c.UAACACert
+	config.CACert = c.UaaCACert
 	config.TokenFunc = boshuaa.NewClientTokenSession(uaa).TokenFunc
 
 	return factory.New(config, boshdir.NewNoopTaskReporter(), boshdir.NewNoopFileReporter())
