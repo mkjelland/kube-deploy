@@ -44,10 +44,15 @@ import (
 type NodeWatcher struct {
 	nodeClient    *kubernetes.Clientset
 	machineClient clusterapiclient.MachinesInterface
+	nameResolver  InstanceResolver
 	linkedNodes   map[string]bool
 }
 
-func NewNodeWatcher(kubeconfig string) (*NodeWatcher, error) {
+type InstanceResolver interface {
+	Get(cid string) (string, error)
+}
+
+func NewNodeWatcher(kubeconfig string, nameResolver InstanceResolver) (*NodeWatcher, error) {
 	nodeClient, err := nodeClient(kubeconfig)
 	if err != nil {
 		return nil, err
@@ -61,6 +66,7 @@ func NewNodeWatcher(kubeconfig string) (*NodeWatcher, error) {
 	return &NodeWatcher{
 		nodeClient:    nodeClient,
 		machineClient: machineClient,
+		nameResolver:  nameResolver,
 		linkedNodes:   make(map[string]bool),
 	}, nil
 }
@@ -112,7 +118,11 @@ func (c *NodeWatcher) link(node *corev1.Node) {
 		return
 	}
 
-	val := node.ObjectMeta.Name
+	val, err := c.nameResolver.Get(node.ObjectMeta.Name)
+	if err != nil {
+		glog.Errorf("Error resolving instance name: %v", err)
+	}
+
 	machine, err := c.machineClient.Get(val, metav1.GetOptions{})
 	if err != nil {
 		glog.Errorf("Error getting machine %v: %v\n", val, err)

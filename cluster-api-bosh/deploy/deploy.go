@@ -20,10 +20,10 @@ import (
 	"fmt"
 
 	"github.com/golang/glog"
-	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
-	"k8s.io/kube-deploy/cluster-api/client"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud"
 	"k8s.io/kube-deploy/cluster-api-bosh/util"
+	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
+	"k8s.io/kube-deploy/cluster-api/client"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
 )
 
@@ -40,7 +40,8 @@ func NewDeployer(provider string, configPath string) *deployer {
 	if configPath == "" {
 		configPath = apiutil.GetDefaultKubeConfigPath()
 	}
-	a, err := cloud.NewMachineActuator(provider, token, nil)
+	// TODO: NYI for bosh
+	a, err := cloud.NewMachineActuator(provider, nil, nil)
 	if err != nil {
 		glog.Exit(err)
 	}

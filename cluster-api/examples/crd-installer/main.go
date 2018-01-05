@@ -46,6 +46,13 @@ func main() {
 	} else {
 		fmt.Printf("Machines CRD created successfully!\n")
 	}
+
+	_, err = clusterv1.CreateClustersCRD(cs)
+	if err != nil {
+		fmt.Printf("Error creating Cluster CRD: %v\n", err)
+	} else {
+		fmt.Printf("Cluster CRD created successfully!\n")
+	}
 }
 
 func clientset() (*apiextensionsclient.Clientset, error) {

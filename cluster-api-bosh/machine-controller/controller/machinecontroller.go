@@ -21,6 +21,7 @@ import (
 	"errors"
 
 	"github.com/golang/glog"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,18 +76,28 @@ func NewMachineController(config *Configuration) *MachineController {
 		glog.Fatalf("error building BOSH director client: %v", err)
 	}
 
+	deps, err := director.Deployments()
+	if err != nil {
+		glog.Fatalf("fetching BOSH deployments from director: %v", err)
+	}
+	// TODO: select the correct deployment? Assuming the director has a single kubo deployment
+	if len(deps) != 1 {
+		glog.Fatalf("unexpected count of deployments from the BOSH director: %i", len(deps))
+	}
+	dep := deps[0]
+
 	machineClient, err := machineClient(config.Kubeconfig)
 	if err != nil {
 		glog.Fatalf("error creating machine client: %v", err)
 	}
 
 	// Determine cloud type from cluster CRD when available
-	actuator, err := cloud.NewMachineActuator(config.Cloud, config.KubeadmToken, machineClient)
+	actuator, err := cloud.NewMachineActuator(config.Cloud, dep, machineClient)
 	if err != nil {
 		glog.Fatalf("error creating machine actuator: %v", err)
 	}
 
-	nodeWatcher, err := NewNodeWatcher(config.Kubeconfig)
+	nodeWatcher, err := NewNodeWatcher(config.Kubeconfig, bosh.NewNameResolver(dep))
 	if err != nil {
 		glog.Fatalf("error creating node watcher: %v", err)
 	}
@@ -259,13 +270,11 @@ func (c *MachineController) create(machine *clusterv1.Machine) error {
 }
 
 func (c *MachineController) delete(machine *clusterv1.Machine) error {
-	c.kubeClientSet.CoreV1().Nodes().Delete(machine.ObjectMeta.Name, &metav1.DeleteOptions{})
+	// TODO: We don't have the Node name here (we have the instance group name) so this can't happen
+	//c.kubeClientSet.CoreV1().Nodes().Delete(machine.ObjectMeta.Name, &metav1.DeleteOptions{})
 	if err := c.actuator.Delete(machine); err != nil {
 		return err
 	}
-	// Do a second node cleanup after the delete completes in case the node joined the cluster
-	// while the deletion of the machine was mid-way.
-	c.kubeClientSet.CoreV1().Nodes().Delete(machine.ObjectMeta.Name, &metav1.DeleteOptions{})
 	return nil
 }
 

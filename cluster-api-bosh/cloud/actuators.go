@@ -20,10 +20,11 @@ import (
 	"fmt"
 
 	"github.com/golang/glog"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh"
 
+	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
-	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh"
 )
 
 // An actuator that just logs instead of doing anything.
@@ -35,12 +36,12 @@ kind: config
 preferences: {}
 `
 
-func NewMachineActuator(cloud string, kubeadmToken string, machineClient client.MachinesInterface) (MachineActuator, error) {
+func NewMachineActuator(cloud string, deployment boshdir.Deployment, machineClient client.MachinesInterface) (MachineActuator, error) {
 	switch cloud {
 	case "google":
-		return bosh.NewMachineActuator(kubeadmToken, machineClient)
-	case "test", "aws", "azure":
-		return &loggingMachineActuator{}, nil
+		return bosh.NewMachineActuator(deployment, machineClient)
+	//case "test", "aws", "azure":
+	//	return &loggingMachineActuator{}, nil
 	default:
 		return nil, fmt.Errorf("Not recognized cloud provider: %s\n", cloud)
 	}
