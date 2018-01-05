@@ -35,13 +35,13 @@ type deployer struct {
 }
 
 //it takes path for kubeconfig file.
-func NewDeployer(provider string, configPath string) *deployer {
+func NewDeployer(configPath string) *deployer {
 	token := util.RandomToken()
 	if configPath == "" {
 		configPath = apiutil.GetDefaultKubeConfigPath()
 	}
 	// TODO: NYI for bosh
-	a, err := cloud.NewMachineActuator(provider, nil, nil)
+	a, err := cloud.NewMachineActuator(nil, nil)
 	if err != nil {
 		glog.Exit(err)
 	}

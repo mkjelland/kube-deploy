@@ -17,8 +17,6 @@ limitations under the License.
 package cloud
 
 import (
-	"fmt"
-
 	"github.com/golang/glog"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh"
 
@@ -36,15 +34,8 @@ kind: config
 preferences: {}
 `
 
-func NewMachineActuator(cloud string, deployment boshdir.Deployment, machineClient client.MachinesInterface) (MachineActuator, error) {
-	switch cloud {
-	case "google":
-		return bosh.NewMachineActuator(deployment, machineClient)
-	//case "test", "aws", "azure":
-	//	return &loggingMachineActuator{}, nil
-	default:
-		return nil, fmt.Errorf("Not recognized cloud provider: %s\n", cloud)
-	}
+func NewMachineActuator(deployment boshdir.Deployment, machineClient client.MachinesInterface) (MachineActuator, error) {
+	return bosh.NewMachineActuator(deployment, machineClient)
 }
 
 func (a loggingMachineActuator) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {

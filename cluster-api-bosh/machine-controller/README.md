@@ -13,7 +13,7 @@ $ go build
 1) Spin up a cluster with at least a master that uses kubeadm
 2) Get the kubeadm join token. Run `kubeadm token list` in master vm
 3) Run `gcloud auth application-default login` to get default credentials
-4) Run controller for google cloud cluster `./machine-controller --cloud google --kubeconfig ~/.kube/config --token {step 1 token}`
+4) Run controller for BOSH cloud cluster `./machine-controller --kubeconfig ~/.kube/config --token {step 1 token}`
 
 ### As a Pod
 1. `kubectl create secret generic kubeconfig --from-file=<Your kubeconfig file>`

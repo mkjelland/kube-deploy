@@ -18,13 +18,14 @@ package cmd
 
 import (
 	"flag"
+	"io/ioutil"
+
 	"github.com/ghodss/yaml"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-	"io/ioutil"
 	"k8s.io/apiserver/pkg/util/logs"
-	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api-bosh/util"
+	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 )
 
 var RootCmd = &cobra.Command{
@@ -39,7 +40,6 @@ var RootCmd = &cobra.Command{
 
 var (
 	kubeConfig string
-	provider   string
 )
 
 func Execute() {
@@ -79,7 +79,6 @@ func parseMachinesYaml(file string) ([]*clusterv1.Machine, error) {
 }
 
 func init() {
-	RootCmd.PersistentFlags().StringVarP(&provider, "provider", "p", "google", "cloud provider google/azure/aws")
 	RootCmd.PersistentFlags().StringVarP(&kubeConfig, "kubecofig", "k", "", "location for the kubernetes config file. If not provided, $HOME/.kube/config is used")
 	flag.CommandLine.Parse([]string{})
 	logs.InitLogs()

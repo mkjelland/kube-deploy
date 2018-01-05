@@ -16,8 +16,6 @@ spec:
         env:
           - name: Kubeconfig
             value: "/kube/config"
-          - name: cloud
-            value: "google"
           - name: BOSHDirectorURL
             value: <IP address of your BOSH director>
           - name: UaaURL

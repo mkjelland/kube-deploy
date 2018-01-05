@@ -24,8 +24,6 @@ import (
 
 type Configuration struct {
 	Kubeconfig      string
-	Cloud           string
-	KubeadmToken    string
 	BOSHDirectorURL string
 	UaaURL          string
 	UaaClient       string
@@ -38,9 +36,7 @@ func NewConfiguration() *Configuration {
 }
 
 func (c *Configuration) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.KubeadmToken, "token", c.KubeadmToken, "Kubeadm token to use to join new machines.")
 	c.Kubeconfig = os.Getenv("Kubeconfig")
-	c.Cloud = os.Getenv("cloud")
 	c.BOSHDirectorURL = os.Getenv("BOSHDirectorURL")
 	c.UaaURL = os.Getenv("UaaURL")
 	c.UaaClient = os.Getenv("UaaClient")
