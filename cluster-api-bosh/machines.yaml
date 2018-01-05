@@ -1,24 +1,14 @@
 apiVersion: "cluster.k8s.io/v1alpha1"
 kind: Machine
 metadata:
-  generateName: gce-master-
+  generateName: gce-node-
   labels:
-    set: master
+    set: node
 spec:
-  providerConfig: >
-    {
-      "apiVersion": "gceproviderconfig/v1alpha1",
-      "kind": "GCEProviderConfig",
-      "project": "jesschen-gke-dev",
-      "zone": "us-central1-f",
-      "machineType": "n1-standard-2",
-      "image": "projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts"
-    }
   versions:
     kubelet: 1.7.4
-    controlPlane: 1.7.4
     containerRuntime:
       name: docker
       version: 1.12.0
   roles:
-  - Master
+  - Node
