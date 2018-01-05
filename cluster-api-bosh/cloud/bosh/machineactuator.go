@@ -82,7 +82,7 @@ func (b *BOSHClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machi
 		return err
 	}
 
-	err = manifest.AddWorker(machine.ObjectMeta.Name)
+	err = manifest.AddWorker(machine.ObjectMeta.Name, machine.Spec.MachineType)
 	if err != nil {
 		return err
 	}

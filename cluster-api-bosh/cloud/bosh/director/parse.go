@@ -106,7 +106,7 @@ func (m *Manifest) duplicateInstanceGroup(src, dest string) (job, error) {
 }
 
 // AddWorker adds a new Worker instance group to the Manifest and returns the instance group name
-func (m *Manifest) AddWorker(name string) error {
+func (m *Manifest) AddWorker(name string, vmType string) error {
 	worker, err := m.duplicateInstanceGroup("worker", name)
 	if err != nil {
 		return err
@@ -114,6 +114,9 @@ func (m *Manifest) AddWorker(name string) error {
 
 	// A single instance allows lookup of VM CID -> Instance Group to enable deletion of a specific VM
 	worker.Instances = 1
+	if vmType != "" {
+		worker.VMType = vmType
+	}
 	m.InstanceGroups = append(m.InstanceGroups, worker)
 
 	return nil

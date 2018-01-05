@@ -1,0 +1,74 @@
+azs:
+- cloud_properties:
+    zone: us-west1-a
+  name: z1
+compilation:
+  az: z1
+  network: kubo-network
+  reuse_compilation_vms: true
+  vm_type: worker
+  workers: 4
+disk_types:
+- disk_size: 10240
+  name: 10240
+- disk_size: 5120
+  name: 5120
+networks:
+- name: kubo-network
+  subnets:
+  - az: z1
+    cloud_properties:
+      ephemeral_external_ip: false
+      network_name: kubo-network
+      subnetwork_name: demo-kubo-us-west1
+    dns:
+    - 10.0.1.1
+    gateway: 10.0.1.1
+    range: 10.0.1.0/24
+  type: dynamic
+vm_types:
+- cloud_properties:
+    machine_type: n1-standard-1
+    root_disk_size_gb: 20
+    root_disk_type: pd-ssd
+    tags:
+    - no-ip
+    - internal
+  name: common
+- cloud_properties:
+    machine_type: n1-standard-1
+    root_disk_size_gb: 20
+    root_disk_type: pd-ssd
+    service_account: demo-kubo-master@graphite-test-mkjelland.iam.gserviceaccount.com
+    tags:
+    - no-ip
+    - internal
+    target_pool: demo-kubo-tcp-public
+  name: master
+- cloud_properties:
+    machine_type: n1-standard-2
+    root_disk_size_gb: 100
+    root_disk_type: pd-ssd
+    service_account: demo-kubo-worker@graphite-test-mkjelland.iam.gserviceaccount.com
+    tags:
+    - no-ip
+    - internal
+  name: worker
+- cloud_properties:
+    machine_type: n1-standard-4
+    root_disk_size_gb: 100
+    root_disk_type: pd-ssd
+    service_account: demo-kubo-worker@graphite-test-mkjelland.iam.gserviceaccount.com
+    tags:
+    - no-ip
+    - internal
+  name: worker-n1-standard-4
+- cloud_properties:
+    machine_type: n1-standard-4
+    root_disk_size_gb: 200
+    root_disk_type: pd-ssd
+    service_account: demo-kubo-worker@graphite-test-mkjelland.iam.gserviceaccount.com
+    tags:
+    - no-ip
+    - internal
+  name: worker-200-gb
