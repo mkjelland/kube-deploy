@@ -204,6 +204,10 @@ type MachineSpec struct {
 	// as-is.
 	// +optional
 	ConfigSource *corev1.NodeConfigSource `json:"configSource,omitempty"`
+
+        // vm_type defined in the BOSH cloud-config that this node should use
+        // +optional
+	MachineType string `json:"machineType"`
 }
 
 type MachineStatus struct {
