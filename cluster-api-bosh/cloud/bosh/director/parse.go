@@ -53,7 +53,7 @@ type job struct {
 	Jobs     []interface{} `yaml:"jobs"`
 	Networks []interface{}
 	//PersistentDisk     int    `yaml:"persistent_disk"`
-	PersistentDiskType interface{} `yaml:"persistent_disk_type"`
+	PersistentDiskType interface{} `yaml:"persistent_disk_type,omitempty"`
 	//PersistentDiskPool string `yaml:"persistent_disk_pool"`
 	//ResourcePool string `yaml:"resource_pool"`
 	Stemcell         interface{}                 `yaml:",omitempty"`
