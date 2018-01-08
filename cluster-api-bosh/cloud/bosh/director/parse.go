@@ -42,6 +42,7 @@ type Manifest struct {
 	// drop the fields not relevant to the deployment manifest.
 	Stemcells []map[string]interface{} `yaml:",omitempty"`
 	Variables []map[string]interface{}
+	AddOns    []map[string]interface{} `yaml:"addons,omitempty"`
 }
 
 // job represents a definition of a BOSH job or Instance Group
