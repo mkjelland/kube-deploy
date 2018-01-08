@@ -33,8 +33,8 @@ type Manifest struct {
 	//ResourcePools  []interface{} `yaml:"resource_pools"`
 	//DiskPools      []interface{} `yaml:"disk_pools"`
 	//Jobs           []job
-	InstanceGroups []job `yaml:"instance_groups"`
-	Properties     map[interface{}]interface{}
+	InstanceGroups []job                       `yaml:"instance_groups"`
+	Properties     map[interface{}]interface{} `yaml:"properties,omitempty"`
 	//Tags           map[string]string
 	Features map[interface{}]interface{}
 	Releases []map[string]interface{}
@@ -50,15 +50,15 @@ type job struct {
 	Instances int
 	//	Lifecycle string
 	//Templates []interface{}
-	Jobs     []interface{} `yaml:"jobs"`
-	Networks []interface{}
-	//PersistentDisk     int    `yaml:"persistent_disk"`
+	Jobs               []interface{} `yaml:"jobs"`
+	Networks           []interface{}
+	PersistentDisk     int         `yaml:"persistent_disk,omitempty"`
 	PersistentDiskType interface{} `yaml:"persistent_disk_type,omitempty"`
 	//PersistentDiskPool string `yaml:"persistent_disk_pool"`
 	//ResourcePool string `yaml:"resource_pool"`
-	Stemcell         interface{}                 `yaml:",omitempty"`
+	Stemcell         interface{}                 `yaml:"stemcell,omitempty"`
 	VMType           interface{}                 `yaml:"vm_type"`
-	Properties       map[interface{}]interface{} `yaml:",omitempty"`
+	Properties       map[interface{}]interface{} `yaml:"properties,omitempty"`
 	AvailbilityZones []interface{}               `yaml:"azs"`
 }
 
