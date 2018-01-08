@@ -180,7 +180,7 @@ func (c *MachineController) onAdd(obj interface{}) {
 	machine := obj.(*clusterv1.Machine)
 	glog.Infof("machine object created: %s\n", machine.ObjectMeta.Name)
 
-	c.runner.runAsync(machine.ObjectMeta.Name, func() {
+	c.runner.runAsync(machine.ClusterName, func() {
 		err := c.reconcile(machine)
 		if err != nil {
 			glog.Errorf("processing machine object %s create failed: %v", machine.ObjectMeta.Name, err)
@@ -195,7 +195,7 @@ func (c *MachineController) onUpdate(oldObj, newObj interface{}) {
 	newMachine := newObj.(*clusterv1.Machine)
 	glog.Infof("machine object updated: %s\n", oldMachine.ObjectMeta.Name)
 
-	c.runner.runAsync(newMachine.ObjectMeta.Name, func() {
+	c.runner.runAsync(newMachine.ClusterName, func() {
 		err := c.reconcile(newMachine)
 		if err != nil {
 			glog.Errorf("processing machine object %s update failed: %v", newMachine.ObjectMeta.Name, err)
@@ -213,7 +213,7 @@ func (c *MachineController) onDelete(obj interface{}) {
 		return
 	}
 
-	c.runner.runAsync(machine.ObjectMeta.Name, func() {
+	c.runner.runAsync(machine.ClusterName, func() {
 		err := c.reconcile(machine)
 		if err != nil {
 			glog.Errorf("processing machine object %s delete failed: %v", machine.ObjectMeta.Name, err)
