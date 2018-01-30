@@ -29,9 +29,6 @@ import (
 // BOKU: Define the real release struct here
 type Release map[string]interface{}
 
-// BOKU: Define Job struct
-type Job interface{}
-
 // Manifest represents a BOSH Manifest
 type Manifest struct {
 	Name   string
@@ -68,6 +65,14 @@ type InstanceGroup struct {
 	VMType           interface{}                 `yaml:"vm_type"`
 	Properties       map[interface{}]interface{} `yaml:"properties,omitempty"`
 	AvailbilityZones []interface{}               `yaml:"azs"`
+}
+
+type Job struct {
+	Name       string                 `yaml:"name"`
+	Release    string                 `yaml:"release"`
+	Consumes   map[string]interface{} `yaml:"consumes,omitempty"`
+	Provides   map[string]interface{} `yaml:"provides,omitempty"`
+	Properties map[string]interface{} `yaml:"properties,omitempty"`
 }
 
 // Parse hydrates a Manifest from a string containing a YAML Manifest
