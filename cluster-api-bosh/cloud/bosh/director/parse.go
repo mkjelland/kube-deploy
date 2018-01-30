@@ -17,7 +17,7 @@ limitations under the License.
 package director
 
 import (
-	"math/rand"
+	"errors"
 	"strings"
 
 	"fmt"
@@ -26,6 +26,9 @@ import (
 	"k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 )
 
+// BOKU: Define the real release struct here
+type Release map[string]interface{}
+
 // Manifest represents a BOSH Manifest
 type Manifest struct {
 	Name   string
@@ -33,12 +36,12 @@ type Manifest struct {
 	//Networks       []interface{}
 	//ResourcePools  []interface{} `yaml:"resource_pools"`
 	//DiskPools      []interface{} `yaml:"disk_pools"`
-	//Jobs           []job
-	InstanceGroups []job                       `yaml:"instance_groups"`
+	//Jobs           []Job
+	InstanceGroups []Job                       `yaml:"instance_groups"`
 	Properties     map[interface{}]interface{} `yaml:"properties,omitempty"`
 	//Tags           map[string]string
 	Features map[interface{}]interface{}
-	Releases []map[string]interface{}
+	Releases []Release
 	// Don't expose cloud-config properties. We need Marshall functions that will give us the right fields. For now
 	// drop the fields not relevant to the deployment manifest.
 	Stemcells []map[string]interface{} `yaml:",omitempty"`
@@ -46,8 +49,8 @@ type Manifest struct {
 	AddOns    []map[string]interface{} `yaml:"addons,omitempty"`
 }
 
-// job represents a definition of a BOSH job or Instance Group
-type job struct {
+// Job represents a definition of a BOSH Job or Instance Group
+type Job struct {
 	Name      string
 	Instances int
 	//	Lifecycle string
@@ -71,10 +74,16 @@ func Parse(val string) (*Manifest, error) {
 	return parsed, yaml.Unmarshal([]byte(val), parsed)
 }
 
+// Deletes an InstanceGroup by Name
+func (m *Manifest) DeleteInstanceGroup(name string) error {
+	return errors.New("BOKU: NYI")
+}
+
+// BOKU: Delete these
 // findInstanceGroupsByType returns all matching instance groups denoted
 // by the same prefix
-func (m *Manifest) findInstanceGroupsByType(name string) []job {
-	var jobs []job
+func (m *Manifest) findInstanceGroupsByType(name string) []Job {
+	var jobs []Job
 
 	for _, job := range m.InstanceGroups {
 		if strings.HasPrefix(job.Name, name) {
@@ -85,23 +94,12 @@ func (m *Manifest) findInstanceGroupsByType(name string) []job {
 	return jobs
 }
 
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-func randStr(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
-	}
-	return string(b)
-}
-
 // createInstanceGroup uses the configuration options in machineSpec
 // to generate a BOSH instance group
-// TODO make this generate an instance group when one doesn't exist
-func (m *Manifest) createInstanceGroup(src, dest string, machineSpec v1alpha1.MachineSpec) (job, error) {
+func (m *Manifest) createInstanceGroup(src, dest string, machineSpec v1alpha1.MachineSpec) (Job, error) {
 	templates := m.findInstanceGroupsByType(src)
 	if len(templates) == 0 {
-		return job{}, fmt.Errorf("can not find template for: %s", src)
+		return Job{}, fmt.Errorf("can not find template for: %s", src)
 	}
 	template := templates[0]
 	template.Name = dest
@@ -138,7 +136,7 @@ func (m *Manifest) AddWorker(name string, machineSpec v1alpha1.MachineSpec) erro
 
 // DeleteWorker removes a Worker instance by instance group name
 func (m *Manifest) DeleteWorker(name string) error {
-	var jobs []job
+	var jobs []Job
 	for _, j := range m.InstanceGroups {
 		if j.Name != name {
 			jobs = append(jobs, j)

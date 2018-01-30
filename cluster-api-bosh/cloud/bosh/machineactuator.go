@@ -19,9 +19,11 @@ package bosh
 import (
 	"errors"
 
+	yaml "gopkg.in/yaml.v2"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/kubo"
+
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	"github.com/golang/glog"
-	"gopkg.in/yaml.v2"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/director"
 
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
@@ -32,6 +34,12 @@ import (
 type BOSHClient struct {
 	machineClient client.MachinesInterface
 	deployment    boshdir.Deployment
+	generator     ManifestGenerator
+}
+
+type ManifestGenerator interface {
+	InstanceGroup(spec clusterv1.MachineSpec) (director.Job, error)
+	Releases(manifest *director.Manifest) ([]director.Release, error)
 }
 
 func (b *BOSHClient) CreateMachineController(cluster *clusterv1.Cluster, initialMachines []*clusterv1.Machine) error {
@@ -42,6 +50,7 @@ func NewMachineActuator(deployment boshdir.Deployment, machineClient client.Mach
 	return &BOSHClient{
 		deployment:    deployment,
 		machineClient: machineClient,
+		generator:     kubo.NewManifestGenerator(),
 	}, nil
 }
 
@@ -55,7 +64,13 @@ func (b *BOSHClient) getManifest() (*director.Manifest, error) {
 	return director.Parse(manifestStr)
 }
 
-func (b *BOSHClient) deployManifest(manifest *director.Manifest) error {
+func (b *BOSHClient) deploy(manifest *director.Manifest) error {
+	releases, err := b.generator.Releases(manifest)
+	if err != nil {
+		return err
+	}
+	manifest.Releases = releases
+
 	manifestBytes, err := yaml.Marshal(manifest)
 	if err != nil {
 		return err
@@ -82,12 +97,13 @@ func (b *BOSHClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machi
 		return err
 	}
 
-	err = manifest.AddWorker(machine.ObjectMeta.Name, machine.Spec)
+	job, err := b.generator.InstanceGroup(machine.Spec)
 	if err != nil {
 		return err
 	}
+	manifest.InstanceGroups = append(manifest.InstanceGroups, job)
 
-	return b.deployManifest(manifest)
+	return b.deploy(manifest)
 }
 
 func (b *BOSHClient) machineToInstanceGroup(cid string) (string, error) {
@@ -105,11 +121,6 @@ func (b *BOSHClient) machineToInstanceGroup(cid string) (string, error) {
 }
 
 func (b *BOSHClient) Delete(machine *clusterv1.Machine) error {
-	//ig, err := b.machineToInstanceGroup(machine.ObjectMeta.Name)
-	//if err != nil {
-	//	return err
-	//}
-
 	ig := machine.ObjectMeta.Name
 
 	manifest, err := b.getManifest()
@@ -117,11 +128,11 @@ func (b *BOSHClient) Delete(machine *clusterv1.Machine) error {
 		return err
 	}
 
-	if err := manifest.DeleteWorker(ig); err != nil {
+	if err := manifest.DeleteInstanceGroup(ig); err != nil {
 		return err
 	}
 
-	return b.deployManifest(manifest)
+	return b.deploy(manifest)
 }
 
 func (b *BOSHClient) PostDelete(cluster *clusterv1.Cluster, machines []*clusterv1.Machine) error {
@@ -137,12 +148,17 @@ func (b *BOSHClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.M
 		return err
 	}
 
-	err = manifest.UpdateWorker(goalMachine.ObjectMeta.Name, goalMachine.Spec)
-	if err != nil {
+	if err := manifest.DeleteInstanceGroup(goalMachine.ObjectMeta.Name); err != nil {
 		return err
 	}
 
-	return b.deployManifest(manifest)
+	job, err := b.generator.InstanceGroup(goalMachine.Spec)
+	if err != nil {
+		return err
+	}
+	manifest.InstanceGroups = append(manifest.InstanceGroups, job)
+
+	return b.deploy(manifest)
 }
 
 func (b *BOSHClient) Exists(machine *clusterv1.Machine) (bool, error) {
