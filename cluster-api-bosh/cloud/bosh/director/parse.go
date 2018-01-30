@@ -29,6 +29,9 @@ import (
 // BOKU: Define the real release struct here
 type Release map[string]interface{}
 
+// BOKU: Define Job struct
+type Job interface{}
+
 // Manifest represents a BOSH Manifest
 type Manifest struct {
 	Name   string
@@ -36,8 +39,8 @@ type Manifest struct {
 	//Networks       []interface{}
 	//ResourcePools  []interface{} `yaml:"resource_pools"`
 	//DiskPools      []interface{} `yaml:"disk_pools"`
-	//Jobs           []Job
-	InstanceGroups []Job                       `yaml:"instance_groups"`
+	//Jobs           []InstanceGroup
+	InstanceGroups []InstanceGroup             `yaml:"instance_groups"`
 	Properties     map[interface{}]interface{} `yaml:"properties,omitempty"`
 	//Tags           map[string]string
 	Features map[interface{}]interface{}
@@ -49,13 +52,13 @@ type Manifest struct {
 	AddOns    []map[string]interface{} `yaml:"addons,omitempty"`
 }
 
-// Job represents a definition of a BOSH Job or Instance Group
-type Job struct {
+// InstanceGroup represents a definition of a BOSH InstanceGroup or Instance Group
+type InstanceGroup struct {
 	Name      string
 	Instances int
 	//	Lifecycle string
 	//Templates []interface{}
-	Jobs               []interface{} `yaml:"jobs"`
+	Jobs               []Job `yaml:"jobs"`
 	Networks           []interface{}
 	PersistentDisk     int         `yaml:"persistent_disk,omitempty"`
 	PersistentDiskType interface{} `yaml:"persistent_disk_type,omitempty"`
@@ -82,8 +85,8 @@ func (m *Manifest) DeleteInstanceGroup(name string) error {
 // BOKU: Delete these
 // findInstanceGroupsByType returns all matching instance groups denoted
 // by the same prefix
-func (m *Manifest) findInstanceGroupsByType(name string) []Job {
-	var jobs []Job
+func (m *Manifest) findInstanceGroupsByType(name string) []InstanceGroup {
+	var jobs []InstanceGroup
 
 	for _, job := range m.InstanceGroups {
 		if strings.HasPrefix(job.Name, name) {
@@ -96,10 +99,10 @@ func (m *Manifest) findInstanceGroupsByType(name string) []Job {
 
 // createInstanceGroup uses the configuration options in machineSpec
 // to generate a BOSH instance group
-func (m *Manifest) createInstanceGroup(src, dest string, machineSpec v1alpha1.MachineSpec) (Job, error) {
+func (m *Manifest) createInstanceGroup(src, dest string, machineSpec v1alpha1.MachineSpec) (InstanceGroup, error) {
 	templates := m.findInstanceGroupsByType(src)
 	if len(templates) == 0 {
-		return Job{}, fmt.Errorf("can not find template for: %s", src)
+		return InstanceGroup{}, fmt.Errorf("can not find template for: %s", src)
 	}
 	template := templates[0]
 	template.Name = dest
@@ -136,7 +139,7 @@ func (m *Manifest) AddWorker(name string, machineSpec v1alpha1.MachineSpec) erro
 
 // DeleteWorker removes a Worker instance by instance group name
 func (m *Manifest) DeleteWorker(name string) error {
-	var jobs []Job
+	var jobs []InstanceGroup
 	for _, j := range m.InstanceGroups {
 		if j.Name != name {
 			jobs = append(jobs, j)

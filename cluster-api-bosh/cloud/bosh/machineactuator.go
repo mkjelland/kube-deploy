@@ -38,7 +38,7 @@ type BOSHClient struct {
 }
 
 type ManifestGenerator interface {
-	InstanceGroup(spec clusterv1.MachineSpec) (director.Job, error)
+	InstanceGroup(spec clusterv1.MachineSpec) (director.InstanceGroup, error)
 	Releases(manifest *director.Manifest) ([]director.Release, error)
 }
 
