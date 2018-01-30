@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	yaml "gopkg.in/yaml.v2"
+	"k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 )
 
 // Manifest represents a BOSH Manifest
@@ -94,9 +95,10 @@ func randStr(n int) string {
 	return string(b)
 }
 
-// duplicateInstanceGroup duplicates an instance group by finding the
-// first matching instance group containing `name` and adding a random suffix
-func (m *Manifest) duplicateInstanceGroup(src, dest string) (job, error) {
+// createInstanceGroup uses the configuration options in machineSpec
+// to generate a BOSH instance group
+// TODO make this generate an instance group when one doesn't exist
+func (m *Manifest) createInstanceGroup(src, dest string, machineSpec v1alpha1.MachineSpec) (job, error) {
 	templates := m.findInstanceGroupsByType(src)
 	if len(templates) == 0 {
 		return job{}, fmt.Errorf("can not find template for: %s", src)
@@ -107,17 +109,28 @@ func (m *Manifest) duplicateInstanceGroup(src, dest string) (job, error) {
 }
 
 // AddWorker adds a new Worker instance group to the Manifest and returns the instance group name
-func (m *Manifest) AddWorker(name string, vmType string) error {
-	worker, err := m.duplicateInstanceGroup("worker", name)
+func (m *Manifest) UpdateWorker(name string, machineSpec v1alpha1.MachineSpec) error {
+	err := m.DeleteWorker(name)
+	if err != nil {
+		return err
+	}
+	err = m.AddWorker(name, machineSpec)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// AddWorker adds a new Worker instance group to the Manifest and returns the instance group name
+func (m *Manifest) AddWorker(name string, machineSpec v1alpha1.MachineSpec) error {
+	worker, err := m.createInstanceGroup("worker", name, machineSpec)
 	if err != nil {
 		return err
 	}
 
 	// A single instance allows lookup of VM CID -> Instance Group to enable deletion of a specific VM
 	worker.Instances = 1
-	if vmType != "" {
-		worker.VMType = vmType
-	}
+
 	m.InstanceGroups = append(m.InstanceGroups, worker)
 
 	return nil

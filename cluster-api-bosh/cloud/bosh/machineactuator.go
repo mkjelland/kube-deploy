@@ -82,7 +82,7 @@ func (b *BOSHClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machi
 		return err
 	}
 
-	err = manifest.AddWorker(machine.ObjectMeta.Name, machine.Spec.MachineType)
+	err = manifest.AddWorker(machine.ObjectMeta.Name, machine.Spec)
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,20 @@ func (b *BOSHClient) PostDelete(cluster *clusterv1.Cluster, machines []*clusterv
 }
 
 func (b *BOSHClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.Machine) error {
-	return errors.New("NYI")
+	if apiutil.IsMaster(goalMachine) {
+		return errors.New("master node updating NYI")
+	}
+	manifest, err := b.getManifest()
+	if err != nil {
+		return err
+	}
+
+	err = manifest.UpdateWorker(goalMachine.ObjectMeta.Name, goalMachine.Spec)
+	if err != nil {
+		return err
+	}
+
+	return b.deployManifest(manifest)
 }
 
 func (b *BOSHClient) Exists(machine *clusterv1.Machine) (bool, error) {
