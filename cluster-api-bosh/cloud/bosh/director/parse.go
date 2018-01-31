@@ -56,12 +56,12 @@ type Manifest struct {
 
 // InstanceGroup represents a definition of a BOSH InstanceGroup or Instance Group
 type InstanceGroup struct {
-	Name      string
-	Instances int
+	Name      string `yaml:"name"`
+	Instances int `yaml:"instances"`
 	//	Lifecycle string
 	//Templates []interface{}
 	Jobs               []Job `yaml:"jobs"`
-	Networks           []interface{}
+	Networks           []interface{} `yaml:"networks"`
 	PersistentDisk     int         `yaml:"persistent_disk,omitempty"`
 	PersistentDiskType interface{} `yaml:"persistent_disk_type,omitempty"`
 	//PersistentDiskPool string `yaml:"persistent_disk_pool"`

@@ -19,10 +19,11 @@ import (
 	"errors"
 	"fmt"
 
+	"regexp"
+
 	"gopkg.in/yaml.v2"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/director"
 	"k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
-	"regexp"
 )
 
 func NewManifestGenerator() *ManifestGenerator {
@@ -140,6 +141,7 @@ persistent_disk: 10240
 stemcell: trusty
 vm_type: worker
 `
+
 var workerInstanceGroups map[string]director.InstanceGroup
 
 func init() {
@@ -157,26 +159,31 @@ func init() {
 	workerInstanceGroups["1.8.6"] = instanceGroup
 }
 
-func (ManifestGenerator) InstanceGroup(spec v1alpha1.MachineSpec) (director.InstanceGroup, error) {
-	ig, ok := workerInstanceGroups[spec.Versions.Kubelet]
+func (ManifestGenerator) InstanceGroup(machine v1alpha1.Machine) (director.InstanceGroup, error) {
+	ig, ok := workerInstanceGroups[machine.Spec.Versions.Kubelet]
 	if !ok {
 		return director.InstanceGroup{}, errors.New("unsupported version")
 	}
 
 	// Specialize the generic InstanceGroup for spec
-	ig.Name = spec.Name
+	ig.Name = machine.ObjectMeta.Name
 
 	for i := range ig.Jobs {
 		if ig.Jobs[i].Name == "cloud-provider" {
 			// BOKU: Fill in these properties from the spec.ProviderConfig
-			gce := map[string]string{
-				"project-id": "",
-				"network-name": "",
-				"worker-node-tag": "",
+			ig.Jobs[i].Properties = map[string]interface{}{
+				"cloud-provider": map[string]interface{}{
+					"type": "gce",
+					"gce": map[string]string{
+						"project-id":      "",
+						"network-name":    "",
+						"worker-node-tag": "",
+					},
+				},
 			}
-			ig.Jobs[i].Properties = map[string]interface{}{"gce": gce}
 		}
 	}
+
 	return ig, nil
 }
 
@@ -197,8 +204,8 @@ func (ManifestGenerator) Releases(manifest *director.Manifest) ([]director.Relea
 				releaseName := job.Release
 				releaseVersion := releaseName[5:] // all characters in the name after "kubo-"
 				releaseMap[releaseName] = director.Release{Name: releaseName,
-															Url: "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-" + releaseVersion + ".tgz",
-															Version: releaseVersion}
+					Url:     "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-" + releaseVersion + ".tgz",
+					Version: "0+dev.1"}
 			}
 		}
 	}

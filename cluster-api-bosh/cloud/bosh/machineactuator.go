@@ -38,7 +38,7 @@ type BOSHClient struct {
 }
 
 type ManifestGenerator interface {
-	InstanceGroup(spec clusterv1.MachineSpec) (director.InstanceGroup, error)
+	InstanceGroup(machine clusterv1.Machine) (director.InstanceGroup, error)
 	Releases(manifest *director.Manifest) ([]director.Release, error)
 }
 
@@ -97,7 +97,7 @@ func (b *BOSHClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machi
 		return err
 	}
 
-	job, err := b.generator.InstanceGroup(machine.Spec)
+	job, err := b.generator.InstanceGroup(*machine)
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func (b *BOSHClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.M
 		return err
 	}
 
-	job, err := b.generator.InstanceGroup(goalMachine.Spec)
+	job, err := b.generator.InstanceGroup(*goalMachine)
 	if err != nil {
 		return err
 	}
