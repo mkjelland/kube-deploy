@@ -26,8 +26,6 @@ import (
 	"github.com/golang/glog"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/director"
 
-	"fmt"
-
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
@@ -128,7 +126,6 @@ func (b *BOSHClient) PostDelete(cluster *clusterv1.Cluster, machines []*clusterv
 }
 
 func (b *BOSHClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.Machine) error {
-	fmt.Printf("HELLO We're in UPDATE %f", goalMachine.ObjectMeta.Name)
 	if apiutil.IsMaster(goalMachine) {
 		return errors.New("master node updating NYI")
 	}

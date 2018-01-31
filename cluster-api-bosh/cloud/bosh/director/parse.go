@@ -85,7 +85,6 @@ func Parse(val string) (*Manifest, error) {
 
 // Deletes an InstanceGroup by Name
 func (m *Manifest) DeleteInstanceGroup(name string) error {
-	fmt.Printf("HELLO We're in DeleteInstanceGroup %f", name)
 	var jobs []InstanceGroup
 	for _, j := range m.InstanceGroups {
 		if j.Name != name {
