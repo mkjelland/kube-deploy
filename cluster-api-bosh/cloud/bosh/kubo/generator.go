@@ -158,16 +158,26 @@ func init() {
 }
 
 func (ManifestGenerator) InstanceGroup(spec v1alpha1.MachineSpec) (director.InstanceGroup, error) {
-	instanceGroup, ok := workerInstanceGroups[spec.Versions.Kubelet]
+	ig, ok := workerInstanceGroups[spec.Versions.Kubelet]
 	if !ok {
 		return director.InstanceGroup{}, errors.New("unsupported version")
 	}
 
 	// Specialize the generic InstanceGroup for spec
-	instanceGroup.Name = spec.Name
+	ig.Name = spec.Name
 
-	// BOKU: apply cloud-provider.properties.cloud-provider.gce.{network-name, project-id, worker-node-tag}
-	return director.InstanceGroup{}, errors.New("BOKU: NYI")
+	for i := range ig.Jobs {
+		if ig.Jobs[i].Name == "cloud-provider" {
+			// BOKU: Fill in these properties from the spec.ProviderConfig
+			gce := map[string]string{
+				"project-id": "",
+				"network-name": "",
+				"worker-node-tag": "",
+			}
+			ig.Jobs[i].Properties = map[string]interface{}{"gce": gce}
+		}
+	}
+	return ig, nil
 }
 
 func (ManifestGenerator) Releases(manifest *director.Manifest) ([]director.Release, error) {
