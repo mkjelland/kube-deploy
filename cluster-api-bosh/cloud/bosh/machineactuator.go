@@ -26,6 +26,8 @@ import (
 	"github.com/golang/glog"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/director"
 
+	"fmt"
+
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
@@ -106,20 +108,6 @@ func (b *BOSHClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machi
 	return b.deploy(manifest)
 }
 
-func (b *BOSHClient) machineToInstanceGroup(cid string) (string, error) {
-	vms, err := b.deployment.VMInfos()
-	if err != nil {
-		return "", err
-	}
-	for _, vm := range vms {
-		if vm.VMID == cid {
-			return vm.JobName, nil
-		}
-	}
-
-	return "", errors.New("instance not found")
-}
-
 func (b *BOSHClient) Delete(machine *clusterv1.Machine) error {
 	ig := machine.ObjectMeta.Name
 
@@ -140,6 +128,7 @@ func (b *BOSHClient) PostDelete(cluster *clusterv1.Cluster, machines []*clusterv
 }
 
 func (b *BOSHClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.Machine) error {
+	fmt.Printf("HELLO We're in UPDATE %f", goalMachine.ObjectMeta.Name)
 	if apiutil.IsMaster(goalMachine) {
 		return errors.New("master node updating NYI")
 	}
@@ -162,11 +151,18 @@ func (b *BOSHClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.M
 }
 
 func (b *BOSHClient) Exists(machine *clusterv1.Machine) (bool, error) {
-	_, err := b.machineToInstanceGroup(machine.ObjectMeta.Name)
+	manifest, err := b.getManifest()
 	if err != nil {
-		return false, nil
+		return false, err
 	}
-	return true, nil
+
+	for _, ig := range manifest.InstanceGroups {
+		if ig.Name == machine.ObjectMeta.Name {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (b *BOSHClient) GetIP(machine *clusterv1.Machine) (string, error) {

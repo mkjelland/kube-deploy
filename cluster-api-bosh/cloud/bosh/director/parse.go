@@ -17,20 +17,16 @@ limitations under the License.
 package director
 
 import (
-	"errors"
-	"strings"
-
 	"fmt"
 
 	yaml "gopkg.in/yaml.v2"
-	"k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 )
 
 // BOKU: Define the real release struct here
 
 type Release struct {
-	Name string `yaml:"name"`
-	Url string `yaml:"url"`
+	Name    string `yaml:"name"`
+	Url     string `yaml:"url"`
 	Version string `yaml:"version"`
 }
 
@@ -46,7 +42,7 @@ type Manifest struct {
 	Properties     map[interface{}]interface{} `yaml:"properties,omitempty"`
 	//Tags           map[string]string
 	Features map[interface{}]interface{}
-	Releases []Release    `yaml:"releases,omitempty"`
+	Releases []Release `yaml:"releases,omitempty"`
 	// Don't expose cloud-config properties. We need Marshall functions that will give us the right fields. For now
 	// drop the fields not relevant to the deployment manifest.
 	Stemcells []map[string]interface{} `yaml:",omitempty"`
@@ -57,13 +53,13 @@ type Manifest struct {
 // InstanceGroup represents a definition of a BOSH InstanceGroup or Instance Group
 type InstanceGroup struct {
 	Name      string `yaml:"name"`
-	Instances int `yaml:"instances"`
+	Instances int    `yaml:"instances"`
 	//	Lifecycle string
 	//Templates []interface{}
-	Jobs               []Job `yaml:"jobs"`
+	Jobs               []Job         `yaml:"jobs"`
 	Networks           []interface{} `yaml:"networks"`
-	PersistentDisk     int         `yaml:"persistent_disk,omitempty"`
-	PersistentDiskType interface{} `yaml:"persistent_disk_type,omitempty"`
+	PersistentDisk     int           `yaml:"persistent_disk,omitempty"`
+	PersistentDiskType interface{}   `yaml:"persistent_disk_type,omitempty"`
 	//PersistentDiskPool string `yaml:"persistent_disk_pool"`
 	//ResourcePool string `yaml:"resource_pool"`
 	Stemcell         interface{}                 `yaml:"stemcell,omitempty"`
@@ -89,66 +85,7 @@ func Parse(val string) (*Manifest, error) {
 
 // Deletes an InstanceGroup by Name
 func (m *Manifest) DeleteInstanceGroup(name string) error {
-	return errors.New("BOKU: NYI")
-}
-
-// BOKU: Delete these
-// findInstanceGroupsByType returns all matching instance groups denoted
-// by the same prefix
-func (m *Manifest) findInstanceGroupsByType(name string) []InstanceGroup {
-	var jobs []InstanceGroup
-
-	for _, job := range m.InstanceGroups {
-		if strings.HasPrefix(job.Name, name) {
-			jobs = append(jobs, job)
-		}
-	}
-
-	return jobs
-}
-
-// createInstanceGroup uses the configuration options in machineSpec
-// to generate a BOSH instance group
-func (m *Manifest) createInstanceGroup(src, dest string, machineSpec v1alpha1.MachineSpec) (InstanceGroup, error) {
-	templates := m.findInstanceGroupsByType(src)
-	if len(templates) == 0 {
-		return InstanceGroup{}, fmt.Errorf("can not find template for: %s", src)
-	}
-	template := templates[0]
-	template.Name = dest
-	return template, nil
-}
-
-// AddWorker adds a new Worker instance group to the Manifest and returns the instance group name
-func (m *Manifest) UpdateWorker(name string, machineSpec v1alpha1.MachineSpec) error {
-	err := m.DeleteWorker(name)
-	if err != nil {
-		return err
-	}
-	err = m.AddWorker(name, machineSpec)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// AddWorker adds a new Worker instance group to the Manifest and returns the instance group name
-func (m *Manifest) AddWorker(name string, machineSpec v1alpha1.MachineSpec) error {
-	worker, err := m.createInstanceGroup("worker", name, machineSpec)
-	if err != nil {
-		return err
-	}
-
-	// A single instance allows lookup of VM CID -> Instance Group to enable deletion of a specific VM
-	worker.Instances = 1
-
-	m.InstanceGroups = append(m.InstanceGroups, worker)
-
-	return nil
-}
-
-// DeleteWorker removes a Worker instance by instance group name
-func (m *Manifest) DeleteWorker(name string) error {
+	fmt.Printf("HELLO We're in DeleteInstanceGroup %f", name)
 	var jobs []InstanceGroup
 	for _, j := range m.InstanceGroups {
 		if j.Name != name {
