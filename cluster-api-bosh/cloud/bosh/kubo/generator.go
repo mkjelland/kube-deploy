@@ -22,6 +22,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/director"
 	"k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
+	"regexp"
 )
 
 func NewManifestGenerator() *ManifestGenerator {
@@ -181,5 +182,31 @@ func (ManifestGenerator) InstanceGroup(spec v1alpha1.MachineSpec) (director.Inst
 }
 
 func (ManifestGenerator) Releases(manifest *director.Manifest) ([]director.Release, error) {
-	return nil, errors.New("BOKU: NYI")
+	releaseMap := map[string]director.Release{}
+
+	// Add non-kubo releases that were in the manifest already
+	for _, release := range manifest.Releases {
+		if ok, _ := regexp.MatchString(`kubo-\d+\.\d+\.\d+`, release.Name); !ok {
+			releaseMap[release.Name] = release
+		}
+	}
+
+	// Add any kubo releases that the instance groups in the manifest need
+	for _, ig := range manifest.InstanceGroups {
+		for _, job := range ig.Jobs {
+			if job.Name == "kubelet" {
+				releaseName := job.Release
+				releaseVersion := releaseName[5:] // all characters in the name after "kubo-"
+				releaseMap[releaseName] = director.Release{Name: releaseName,
+															Url: "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-" + releaseVersion + ".tgz",
+															Version: releaseVersion}
+			}
+		}
+	}
+
+	releases := []director.Release{}
+	for _, release := range releaseMap {
+		releases = append(releases, release)
+	}
+	return releases, nil
 }

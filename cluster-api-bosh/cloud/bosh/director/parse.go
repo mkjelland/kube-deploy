@@ -27,7 +27,12 @@ import (
 )
 
 // BOKU: Define the real release struct here
-type Release map[string]interface{}
+
+type Release struct {
+	Name string `yaml:"name"`
+	Url string `yaml:"url"`
+	Version string `yaml:"version"`
+}
 
 // Manifest represents a BOSH Manifest
 type Manifest struct {
@@ -41,7 +46,7 @@ type Manifest struct {
 	Properties     map[interface{}]interface{} `yaml:"properties,omitempty"`
 	//Tags           map[string]string
 	Features map[interface{}]interface{}
-	Releases []Release
+	Releases []Release    `yaml:"releases,omitempty"`
 	// Don't expose cloud-config properties. We need Marshall functions that will give us the right fields. For now
 	// drop the fields not relevant to the deployment manifest.
 	Stemcells []map[string]interface{} `yaml:",omitempty"`
