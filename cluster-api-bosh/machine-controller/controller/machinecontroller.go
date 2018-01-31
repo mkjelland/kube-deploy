@@ -92,7 +92,7 @@ func NewMachineController(config *Configuration) *MachineController {
 	}
 
 	// Determine cloud type from cluster CRD when available
-	actuator, err := cloud.NewMachineActuator(dep, machineClient)
+	actuator, err := cloud.NewMachineActuator(director, dep, machineClient)
 	if err != nil {
 		glog.Fatalf("error creating machine actuator: %v", err)
 	}

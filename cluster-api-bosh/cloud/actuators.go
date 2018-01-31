@@ -34,8 +34,8 @@ kind: config
 preferences: {}
 `
 
-func NewMachineActuator(deployment boshdir.Deployment, machineClient client.MachinesInterface) (MachineActuator, error) {
-	return bosh.NewMachineActuator(deployment, machineClient)
+func NewMachineActuator(director boshdir.Director, deployment boshdir.Deployment, machineClient client.MachinesInterface) (MachineActuator, error) {
+	return bosh.NewMachineActuator(director, deployment, machineClient)
 }
 
 func (a loggingMachineActuator) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {

@@ -28,6 +28,7 @@ type Release struct {
 	Name    string `yaml:"name"`
 	Url     string `yaml:"url"`
 	Version string `yaml:"version"`
+	Sha1    string `yaml:"sha1"`
 }
 
 // Manifest represents a BOSH Manifest

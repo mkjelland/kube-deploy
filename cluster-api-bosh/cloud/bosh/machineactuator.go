@@ -32,6 +32,7 @@ import (
 )
 
 type BOSHClient struct {
+	boshDirector  boshdir.Director
 	machineClient client.MachinesInterface
 	deployment    boshdir.Deployment
 	generator     ManifestGenerator
@@ -46,8 +47,9 @@ func (b *BOSHClient) CreateMachineController(cluster *clusterv1.Cluster, initial
 	return errors.New("NYI")
 }
 
-func NewMachineActuator(deployment boshdir.Deployment, machineClient client.MachinesInterface) (*BOSHClient, error) {
+func NewMachineActuator(boshDirector boshdir.Director, deployment boshdir.Deployment, machineClient client.MachinesInterface) (*BOSHClient, error) {
 	return &BOSHClient{
+		boshDirector:  boshDirector,
 		deployment:    deployment,
 		machineClient: machineClient,
 		generator:     kubo.NewManifestGenerator(),
@@ -84,6 +86,15 @@ func (b *BOSHClient) deploy(manifest *director.Manifest) error {
 
 	glog.Infof("deployment diff: \n%v", diff)
 
+	for _, release := range manifest.Releases {
+		hasRelease, err := b.boshDirector.HasRelease(release.Name, release.Version, boshdir.OSVersionSlug{})
+		if release.Url != "" && err != nil && !hasRelease {
+			err = b.boshDirector.UploadReleaseURL(release.Url, release.Sha1, false, false)
+		}
+		if err != nil {
+			return err
+		}
+	}
 	return b.deployment.Update(manifestBytes, boshdir.UpdateOpts{})
 }
 

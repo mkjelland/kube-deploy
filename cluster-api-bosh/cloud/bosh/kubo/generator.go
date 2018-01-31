@@ -144,6 +144,8 @@ vm_type: worker
 
 var workerInstanceGroups map[string]director.InstanceGroup
 
+var releases map[string]director.Release
+
 func init() {
 	workerInstanceGroups = map[string]director.InstanceGroup{}
 	instanceGroup := director.InstanceGroup{}
@@ -157,6 +159,16 @@ func init() {
 		panic(fmt.Errorf("unmarshalling kubo 1.8.6: %v", err))
 	}
 	workerInstanceGroups["1.8.6"] = instanceGroup
+
+	releases = map[string]director.Release{}
+	releases["kubo-1.8.6"] = director.Release{Name: "kubo-1.8.6",
+		Url:     "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-1.8.6.tgz",
+		Version: "0+dev.1",
+		Sha1:    "3947a6ca6dc973fb997815638089612b0e5471a4"}
+	releases["kubo-1.9.2"] = director.Release{Name: "kubo-1.9.2",
+		Url:     "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-1.9.2.tgz",
+		Version: "0+dev.1",
+		Sha1:    "11281ad8edcbfa574973d1ec6353a4dc6ac8f53e"}
 }
 
 func (ManifestGenerator) InstanceGroup(machine v1alpha1.Machine) (director.InstanceGroup, error) {
@@ -202,17 +214,14 @@ func (ManifestGenerator) Releases(manifest *director.Manifest) ([]director.Relea
 		for _, job := range ig.Jobs {
 			if job.Name == "kubelet" {
 				releaseName := job.Release
-				releaseVersion := releaseName[5:] // all characters in the name after "kubo-"
-				releaseMap[releaseName] = director.Release{Name: releaseName,
-					Url:     "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-" + releaseVersion + ".tgz",
-					Version: "0+dev.1"}
+				releaseMap[releaseName] = releases[releaseName]
 			}
 		}
 	}
 
-	releases := []director.Release{}
+	manifestReleases := []director.Release{}
 	for _, release := range releaseMap {
-		releases = append(releases, release)
+		manifestReleases = append(manifestReleases, release)
 	}
-	return releases, nil
+	return manifestReleases, nil
 }
