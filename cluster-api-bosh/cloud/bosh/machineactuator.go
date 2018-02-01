@@ -89,7 +89,7 @@ func (b *BOSHClient) deploy(manifest *director.Manifest) error {
 
 	for _, release := range manifest.Releases {
 		hasRelease, err := b.boshDirector.HasRelease(release.Name, release.Version, boshdir.OSVersionSlug{})
-		if release.Url != "" && err != nil && !hasRelease {
+		if release.Url != "" && err == nil && !hasRelease {
 			err = b.boshDirector.UploadReleaseURL(release.Url, release.Sha1, false, false)
 		}
 		if err != nil {
