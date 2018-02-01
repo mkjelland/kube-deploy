@@ -16,12 +16,14 @@ limitations under the License.
 package kubo
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"regexp"
 
-	"gopkg.in/yaml.v2"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/director"
 	"k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
@@ -586,16 +588,19 @@ func (ManifestGenerator) InstanceGroup(machine v1alpha1.Machine) (director.Insta
 	// Specialize the generic InstanceGroup for spec
 	ig.Name = machine.ObjectMeta.Name
 
+	providerConfig := map[string]string{}
+	// Ignoring error, these values aren't strictly required
+	json.Unmarshal([]byte(machine.Spec.ProviderConfig), &providerConfig)
+
 	for i := range ig.Jobs {
 		if ig.Jobs[i].Name == "cloud-provider" {
-			// BOKU: Fill in these properties from the spec.ProviderConfig
 			ig.Jobs[i].Properties = map[string]interface{}{
 				"cloud-provider": map[string]interface{}{
 					"type": "gce",
 					"gce": map[string]string{
-						"project-id":      "",
-						"network-name":    "",
-						"worker-node-tag": "",
+						"project-id":      providerConfig["project"],
+						"network-name":    providerConfig["networkName"],
+						"worker-node-tag": providerConfig["workerNodeTag"],
 					},
 				},
 			}

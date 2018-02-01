@@ -12,3 +12,12 @@ spec:
       version: 1.12.0
   roles:
   - Node
+  providerConfig: >
+    {
+      "apiVersion": "gceproviderconfig/v1alpha1",
+      "kind": "GCEProviderConfig",
+      "project": "graphite-demo-jjcf",
+      "workerNodeTag": "my-cluster-worker",
+      "networkName": "kubo-network"
+   }
+
