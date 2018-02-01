@@ -47,8 +47,14 @@ type Manifest struct {
 	// Don't expose cloud-config properties. We need Marshall functions that will give us the right fields. For now
 	// drop the fields not relevant to the deployment manifest.
 	Stemcells []map[string]interface{} `yaml:",omitempty"`
-	Variables []map[string]interface{}
+	Variables []Variable
 	AddOns    []map[string]interface{} `yaml:"addons,omitempty"`
+}
+
+type Variable struct {
+	Name    string                 `yaml:"name"`
+	Type    string                 `yaml:"type"`
+	Options map[string]interface{} `yaml:"options,omitempty"`
 }
 
 // InstanceGroup represents a definition of a BOSH InstanceGroup or Instance Group

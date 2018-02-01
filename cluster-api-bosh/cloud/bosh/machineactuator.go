@@ -40,7 +40,7 @@ type BOSHClient struct {
 
 type ManifestGenerator interface {
 	InstanceGroup(machine clusterv1.Machine) (director.InstanceGroup, error)
-	Releases(manifest *director.Manifest) ([]director.Release, error)
+	ReleasesAndVariables(manifest *director.Manifest) ([]director.Release, []director.Variable, error)
 }
 
 func (b *BOSHClient) CreateMachineController(cluster *clusterv1.Cluster, initialMachines []*clusterv1.Machine) error {
@@ -67,11 +67,12 @@ func (b *BOSHClient) getManifest() (*director.Manifest, error) {
 }
 
 func (b *BOSHClient) deploy(manifest *director.Manifest) error {
-	releases, err := b.generator.Releases(manifest)
+	releases, variables, err := b.generator.ReleasesAndVariables(manifest)
 	if err != nil {
 		return err
 	}
 	manifest.Releases = releases
+	manifest.Variables = variables
 
 	manifestBytes, err := yaml.Marshal(manifest)
 	if err != nil {
@@ -137,9 +138,6 @@ func (b *BOSHClient) PostDelete(cluster *clusterv1.Cluster, machines []*clusterv
 }
 
 func (b *BOSHClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.Machine) error {
-	if apiutil.IsMaster(goalMachine) {
-		return errors.New("master node updating NYI")
-	}
 	manifest, err := b.getManifest()
 	if err != nil {
 		return err
