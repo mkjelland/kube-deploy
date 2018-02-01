@@ -48,7 +48,6 @@ type Manifest struct {
 	// drop the fields not relevant to the deployment manifest.
 	Stemcells []map[string]interface{} `yaml:",omitempty"`
 	Variables []Variable
-	AddOns    []map[string]interface{} `yaml:"addons,omitempty"`
 }
 
 type Variable struct {

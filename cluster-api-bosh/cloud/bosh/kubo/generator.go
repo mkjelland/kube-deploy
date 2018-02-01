@@ -39,6 +39,8 @@ azs:
 - z1
 instances: 1
 jobs:
+- name: kubo-dns-aliases
+  release: kubo-1.9.2
 - name: secure-var-vcap
   release: kubo-1.9.2
 - name: flanneld
@@ -94,6 +96,8 @@ azs:
 - z1
 instances: 1
 jobs:
+- name: kubo-dns-aliases
+  release: kubo-1.8.6
 - name: secure-var-vcap
   release: kubo-1.8.6
 - name: flanneld
@@ -149,6 +153,8 @@ azs:
   - z1
 instances: 1
 jobs:
+- name: kubo-dns-aliases
+  release: kubo-1.8.6
 - name: docker
   release: docker
   properties:
@@ -249,6 +255,8 @@ azs:
   - z1
 instances: 1
 jobs:
+- name: kubo-dns-aliases
+  release: kubo-1.9.2
 - name: secure-var-vcap
   release: kubo-1.9.2
 - name: cloud-provider
@@ -378,9 +386,7 @@ const kubo_1_8_6_variables = `
     - kubernetes.default.svc
     - kubernetes.default.svc.cluster.local
     - master.cfcr.internal
-    - 35.227.166.27
     ca: kubo_ca
-    common_name: 35.227.166.27
     organization: system:masters
   type: certificate
 - name: tls-docker
@@ -455,9 +461,7 @@ const kubo_1_9_2_variables = `
     - kubernetes.default.svc
     - kubernetes.default.svc.cluster.local
     - master.cfcr.internal
-    - 35.227.166.27
     ca: kubo_ca
-    common_name: 35.227.166.27
     organization: system:masters
   type: certificate
 - name: service-account-key
