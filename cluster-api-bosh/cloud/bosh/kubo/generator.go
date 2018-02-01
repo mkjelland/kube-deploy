@@ -217,19 +217,6 @@ jobs:
     tls:
       kubernetes: ((tls-kubernetes))
   release: kubo-1.8.6
-- consumes:
-    cloud-provider:
-      from: master
-  name: kubernetes-system-specs
-  properties:
-    admin-password: ((kubo-admin-password))
-    admin-username: admin
-    api-token: ((kubelet-password))
-    authorization-mode: rbac
-    tls:
-      kubernetes: ((tls-kubernetes))
-      kubernetes-dashboard: ((tls-kubernetes-dashboard))
-  release: kubo-1.8.6
 - name: etcd
   properties:
     etcd:
@@ -331,21 +318,6 @@ jobs:
     api-token: ((kube-scheduler-password))
     tls:
       kubernetes: ((tls-kubernetes))
-  release: kubo-1.9.2
-- consumes:
-    cloud-provider:
-      from: master
-  name: kubernetes-system-specs
-  properties:
-    admin-password: ((kubo-admin-password))
-    admin-username: admin
-    api-token: ((kubelet-password))
-    authorization-mode: rbac
-    tls:
-      heapster: ((tls-heapster))
-      influxdb: ((tls-influxdb))
-      kubernetes: ((tls-kubernetes))
-      kubernetes-dashboard: ((tls-kubernetes-dashboard))
   release: kubo-1.9.2
 - name: etcd
   properties:
