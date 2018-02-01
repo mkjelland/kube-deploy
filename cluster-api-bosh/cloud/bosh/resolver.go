@@ -29,14 +29,9 @@ func (ns *nameResolver) machineToInstanceGroup(cid string) (string, error) {
 }
 
 // Map the cid to the instance group name
-// HACK: If it's in the worker instance group we will return the cid as these aren't managed by the Machine
 func (ns *nameResolver) Get(cid string) (string, error) {
 	ig, err := ns.machineToInstanceGroup(cid)
 	if err != nil {
-		return cid, nil
-	}
-
-	if ig == "worker" {
 		return cid, nil
 	}
 
