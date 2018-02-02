@@ -19,5 +19,5 @@ spec:
       "project": "graphite-demo-jjcf",
       "workerNodeTag": "my-cluster-worker",
       "networkName": "kubo-network"
-   }
+    }
 
