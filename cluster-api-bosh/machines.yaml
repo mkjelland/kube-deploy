@@ -14,8 +14,8 @@ spec:
   - Node
   providerConfig: >
     {
-      "apiVersion": "gceproviderconfig/v1alpha1",
-      "kind": "GCEProviderConfig",
+      "apiVersion": "boshproviderconfig/v1alpha1",
+      "kind": "BOSHProviderConfig",
       "project": "graphite-demo-jjcf",
       "workerNodeTag": "my-cluster-worker",
       "networkName": "kubo-network"
