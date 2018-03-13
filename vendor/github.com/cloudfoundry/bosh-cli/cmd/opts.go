@@ -61,10 +61,11 @@ type BoshOpts struct {
 	CleanUp CleanUpOpts `command:"clean-up" description:"Clean up releases, stemcells, disks, etc."`
 
 	// Config
-	Config       ConfigOpts       `command:"config" alias:"c" description:"Show current config"`
-	Configs      ConfigsOpts      `command:"configs" alias:"cs" description:"List configs"`
-	UpdateConfig UpdateConfigOpts `command:"update-config" alias:"uc" description:"Update config"`
-	DeleteConfig DeleteConfigOpts `command:"delete-config" alias:"dc" description:"Delete config"`
+	Config         ConfigOpts       `command:"config" alias:"c" description:"Show current config"`
+	Configs        ConfigsOpts      `command:"configs" alias:"cs" description:"List configs"`
+	UpdateConfig   UpdateConfigOpts `command:"update-config" alias:"uc" description:"Update config"`
+	DeleteConfig   DeleteConfigOpts `command:"delete-config" alias:"dc" description:"Delete config"`
+	DiffConfigByID DiffConfigOpts   `command:"diff-config" description:"Diff two configs by ID"`
 
 	// Cloud config
 	CloudConfig       CloudConfigOpts       `command:"cloud-config"        alias:"cc"  description:"Show current cloud config"`
@@ -310,10 +311,22 @@ type ConfigArgs struct {
 }
 
 type ConfigsOpts struct {
-	Name string `long:"name" description:"Config name" optional:"true"`
-	Type string `long:"type" description:"Config type" optional:"true"`
+	Name            string `long:"name" description:"Config name" optional:"true"`
+	Type            string `long:"type" description:"Config type" optional:"true"`
+	IncludeOutdated bool   `long:"include-outdated" description:"Include outdated configs"`
 
 	cmd
+}
+
+type DiffConfigOpts struct {
+	Args DiffConfigArgs `positional-args:"true" required:"true"`
+
+	cmd
+}
+
+type DiffConfigArgs struct {
+	FromID string `positional-arg-name:"FROM" description:"ID of first config to compare"`
+	ToID   string `positional-arg-name:"TO" description:"ID of second config to compare"`
 }
 
 type UpdateConfigOpts struct {
@@ -677,9 +690,10 @@ type InstancesOpts struct {
 }
 
 type VMsOpts struct {
-	DNS        bool `long:"dns"               description:"Show DNS A records"`
-	Vitals     bool `long:"vitals"            description:"Show vitals"`
-	Deployment string
+	DNS             bool `long:"dns"               description:"Show DNS A records"`
+	Vitals          bool `long:"vitals"            description:"Show vitals"`
+	CloudProperties bool `long:"cloud-properties"  description:"Show cloud properties"`
+	Deployment      string
 	cmd
 }
 

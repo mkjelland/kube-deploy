@@ -234,6 +234,9 @@ func (c Cmd) Execute() (cmdErr error) {
 	case *ConfigsOpts:
 		return NewConfigsCmd(deps.UI, c.director()).Run(*opts)
 
+	case *DiffConfigOpts:
+		return NewDiffConfigCmd(deps.UI, c.director()).Run(*opts)
+
 	case *UpdateConfigOpts:
 		return NewUpdateConfigCmd(deps.UI, c.director()).Run(*opts)
 
@@ -273,10 +276,10 @@ func (c Cmd) Execute() (cmdErr error) {
 		return NewInspectReleaseCmd(deps.UI, c.director()).Run(*opts)
 
 	case *VMsOpts:
-		return NewVMsCmd(deps.UI, c.director()).Run(*opts)
+		return NewVMsCmd(deps.UI, c.director(), c.BoshOpts.Parallel).Run(*opts)
 
 	case *InstancesOpts:
-		return NewInstancesCmd(deps.UI, c.director()).Run(*opts)
+		return NewInstancesCmd(deps.UI, c.director(), c.BoshOpts.Parallel).Run(*opts)
 
 	case *UpdateResurrectionOpts:
 		return NewUpdateResurrectionCmd(c.director()).Run(*opts)
