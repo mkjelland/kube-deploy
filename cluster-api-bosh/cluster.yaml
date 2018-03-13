@@ -9,3 +9,33 @@ spec:
         pods: 
             cidrBlocks: ["192.168.0.0/16"]
         dnsDomain: "cluster.local"
+    providerConfig: |
+      {
+        "network": {
+          "netmask": "255.255.255.0",
+          "range": "10.0.8.0/24",
+          "gateway": "10.0.8.1",
+          "dns": ["8.8.8.8"],
+          "reserved": ["10.0.8.1", "10.0.8.2", "10.0.8.3"],
+        },
+        "certificate": {
+          "ca": "",
+          "private_key": "",
+          "certificate": ""
+        }
+        "api_token": "aabbccdd",
+        "master_ip": "TODO",
+        "cloud_provider": {
+          "type": "vsphere",
+          "vsphere": {
+            "user": "..",
+            "password": "",
+            "server": "",
+            "insecure-flag": 1,
+            "datacenter": "",
+            "datastore": "",
+            "vms": "",
+            "working-dir": ""
+          }
+        }
+      }

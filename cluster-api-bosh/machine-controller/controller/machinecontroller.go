@@ -66,25 +66,25 @@ func NewMachineController(config *Configuration) *MachineController {
 
 	clusterClient := client.New(restClient)
 
-	uaa, err := buildUAA(config)
-	if err != nil {
-		glog.Fatalf("error building UAA client: %v", err)
-	}
-
-	director, err := buildDirector(uaa, config)
-	if err != nil {
-		glog.Fatalf("error building BOSH director client: %v", err)
-	}
-
-	deps, err := director.Deployments()
-	if err != nil {
-		glog.Fatalf("fetching BOSH deployments from director: %v", err)
-	}
-	// TODO: select the correct deployment? Assuming the director has a single kubo deployment
-	if len(deps) != 1 {
-		glog.Fatalf("unexpected count of deployments from the BOSH director: %i", len(deps))
-	}
-	dep := deps[0]
+	//uaa, err := buildUAA(config)
+	//if err != nil {
+	//	glog.Fatalf("error building UAA client: %v", err)
+	//}
+	//
+	//director, err := buildDirector(uaa, config)
+	//if err != nil {
+	//	glog.Fatalf("error building BOSH director client: %v", err)
+	//}
+	//
+	//deps, err := director.Deployments()
+	//if err != nil {
+	//	glog.Fatalf("fetching BOSH deployments from director: %v", err)
+	//}
+	//// TODO: select the correct deployment? Assuming the director has a single kubo deployment
+	//if len(deps) != 1 {
+	//	glog.Fatalf("unexpected count of deployments from the BOSH director: %i", len(deps))
+	//}
+	//dep := deps[0]
 
 	machineClient, err := machineClient(config.Kubeconfig)
 	if err != nil {
@@ -92,7 +92,7 @@ func NewMachineController(config *Configuration) *MachineController {
 	}
 
 	// Determine cloud type from cluster CRD when available
-	actuator, err := cloud.NewMachineActuator(director, dep, machineClient)
+	actuator, err := cloud.NewMachineActuator(clusterClient.Clusters(), clusterClient.Machines())
 	if err != nil {
 		glog.Fatalf("error creating machine actuator: %v", err)
 	}

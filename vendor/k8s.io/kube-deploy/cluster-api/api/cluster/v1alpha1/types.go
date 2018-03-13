@@ -234,6 +234,8 @@ type MachineStatus struct {
 	// If set, indicates that there is a problem reconciling state, and
 	// will be set to a human readable string to indicate the problem.
 	ErrorMessage *string `json:"errorMessage,omitempty"`
+
+	ProviderState string `json:"providerState"`
 }
 
 type MachineStatusError string

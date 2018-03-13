@@ -18,9 +18,8 @@ package cloud
 
 import (
 	"github.com/golang/glog"
-	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh-create-env"
 
-	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
 )
@@ -34,8 +33,8 @@ kind: config
 preferences: {}
 `
 
-func NewMachineActuator(director boshdir.Director, deployment boshdir.Deployment, machineClient client.MachinesInterface) (MachineActuator, error) {
-	return bosh.NewMachineActuator(director, deployment, machineClient)
+func NewMachineActuator(clusterClient client.ClustersInterface, machineClient client.MachinesInterface) (MachineActuator, error) {
+	return boshcreatenv.NewMachineActuator(clusterClient, machineClient)
 }
 
 func (a loggingMachineActuator) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {

@@ -104,6 +104,20 @@ func machineClient(kubeconfig string) (client.MachinesInterface, error) {
 	return client.Machines(), nil
 }
 
+func clusterClient(kubeconfig string) (client.ClustersInterface, error) {
+	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := client.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Clusters(), nil
+}
+
 func host(kubeconfigpath string) (string, error) {
 	cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigpath)
 	if err != nil {

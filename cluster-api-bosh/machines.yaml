@@ -20,4 +20,3 @@ spec:
       "workerNodeTag": "my-cluster-worker",
       "networkName": "kubo-network"
     }
-

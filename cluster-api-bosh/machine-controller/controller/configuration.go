@@ -23,12 +23,18 @@ import (
 )
 
 type Configuration struct {
-	Kubeconfig      string
+	Kubeconfig string
+	Actuator   string
+
+	// bosh cloud
 	BOSHDirectorURL string
 	UaaURL          string
 	UaaClient       string
 	UaaClientSecret string
 	UaaCACert       string
+
+	// boshcreateenv cloud
+
 }
 
 func NewConfiguration() *Configuration {
@@ -36,6 +42,7 @@ func NewConfiguration() *Configuration {
 }
 
 func (c *Configuration) AddFlags(fs *pflag.FlagSet) {
+	c.Actuator = "boshcreateenv"
 	c.Kubeconfig = os.Getenv("Kubeconfig")
 	c.BOSHDirectorURL = os.Getenv("BOSHDirectorURL")
 	c.UaaURL = os.Getenv("UaaURL")

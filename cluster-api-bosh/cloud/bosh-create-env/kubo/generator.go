@@ -24,7 +24,7 @@ import (
 
 	"regexp"
 
-	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh/director"
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh-create-env/director"
 	"k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
 )
@@ -519,6 +519,21 @@ const kubo_1_9_2_variables = `
   type: certificate
 `
 
+// TODO: configurable machine type for vsphere
+// TODO: service account for controller
+const cloud_config = `
+resource_pools:
+- name: default
+  network: default
+  cloud_properties:
+    machine_type: n1-standard-2
+    root_disk_size_gb: 100
+    root_disk_type: pd-ssd
+    tags:
+    - no-ip
+    - internal
+`
+
 var workerInstanceGroups map[string]director.InstanceGroup
 var masterInstanceGroups map[string]director.InstanceGroup
 
@@ -553,7 +568,6 @@ func init() {
 	masterInstanceGroups["1.8.6"] = instanceGroup
 
 	releases = map[string]director.Release{}
-	releases["kubo"] = director.Release{Name: "kubo", Version: "latest"}
 	releases["kubo-1.8.6"] = director.Release{Name: "kubo-1.8.6",
 		Url:     "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-1.8.6.tgz",
 		Version: "0+dev.4",
@@ -574,6 +588,10 @@ func init() {
 		panic(fmt.Errorf("unmarshalling kubo variables 1.8.6: %v", err))
 	}
 	variables["kubo-1.8.6"] = tmpVariables
+}
+
+func (ManifestGenerator) Generate(machine *v1alpha1.Machine, cluster *v1alpha1.Cluster, ip string) (string, error) {
+	name := machine.Name
 }
 
 func (ManifestGenerator) InstanceGroup(machine v1alpha1.Machine) (director.InstanceGroup, error) {
