@@ -13,10 +13,13 @@ const kubo_worker_1_9_2 = `
   value:
   - name: kubo-dns-aliases
     release: kubo-1.9.2
+    properties: {}
   - name: secure-var-vcap
     release: kubo-1.9.2
+    properties: {}
   - name: flanneld
     release: kubo-1.9.2
+    properties: {}
   - name: docker
     properties:
       bip: 172.17.0.1/24

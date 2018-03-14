@@ -17,6 +17,11 @@ releases: # appended by role/version ops
 resource_pools:
 - name: default
   network: default
+  env:
+    bosh:
+      password: '*'
+      mbus:
+        cert: ((mbus_bootstrap_ssl))
   cloud_properties:
     machine_type: n1-standard-2
     root_disk_size_gb: 100
