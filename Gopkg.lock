@@ -114,6 +114,7 @@
   revision = "a74fc7069b604abe84f1ddd899f58ae1e6b1f8ee"
 
 [[projects]]
+  branch = "wip-manual-links"
   name = "github.com/cloudfoundry/bosh-cli"
   packages = [
     "blobstore",
@@ -167,8 +168,8 @@
     "ui/task",
     "work"
   ]
-  revision = "712bfd7271b478ba03c3f604339e2eefbec4647c"
-  version = "v3.0.1"
+  revision = "b642cab6f7f5b7cdf1dc5fc98b19afc3b488d50a"
+  source = "github.com/dpb587-pivotal/bosh-cli"
 
 [[projects]]
   name = "github.com/cloudfoundry/bosh-davcli"
@@ -889,6 +890,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a7f385ecf5133d9bb78c1e04921722f54d95f9ba494e42d8fcea4151fd9759dd"
+  inputs-digest = "5e44af82c973905d3f749840e09d37ada7eb6d4ebb091fac1c33b138cdd8669a"
   solver-name = "gps-cdcl"
   solver-version = 1

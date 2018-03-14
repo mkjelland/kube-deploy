@@ -14,6 +14,7 @@ import (
 type jobEvaluationContext struct {
 	releaseJob           bireljob.Job
 	releaseJobProperties *biproperty.Map
+	releaseJobConsumes   *biproperty.Map
 	jobProperties        biproperty.Map
 	globalProperties     biproperty.Map
 	deploymentName       string
@@ -42,6 +43,8 @@ type RootContext struct {
 	ClusterProperties biproperty.Map  `json:"cluster_properties"` // values from instance group (deployment job) properties
 	JobProperties     *biproperty.Map `json:"job_properties"`     // values from release job (aka template) properties
 	DefaultProperties biproperty.Map  `json:"default_properties"` // values from release's job's spec
+
+	JobConsumes *biproperty.Map `json:"links"`
 }
 
 type jobContext struct {
@@ -57,6 +60,7 @@ type networkContext struct {
 func NewJobEvaluationContext(
 	releaseJob bireljob.Job,
 	releaseJobProperties *biproperty.Map,
+	releaseJobConsumes *biproperty.Map,
 	jobProperties biproperty.Map,
 	globalProperties biproperty.Map,
 	deploymentName string,
@@ -67,6 +71,7 @@ func NewJobEvaluationContext(
 	return jobEvaluationContext{
 		releaseJob:           releaseJob,
 		releaseJobProperties: releaseJobProperties,
+		releaseJobConsumes:   releaseJobConsumes,
 		jobProperties:        jobProperties,
 		globalProperties:     globalProperties,
 		deploymentName:       deploymentName,
@@ -91,6 +96,7 @@ func (ec jobEvaluationContext) MarshalJSON() ([]byte, error) {
 		GlobalProperties:  ec.globalProperties,
 		ClusterProperties: ec.jobProperties,
 		JobProperties:     ec.releaseJobProperties,
+		JobConsumes:       ec.releaseJobConsumes,
 		DefaultProperties: defaultProperties,
 	}
 

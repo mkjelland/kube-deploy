@@ -88,6 +88,17 @@ type releaseJobRef struct {
 	// This is a pointer so we can differentiate between `properties: {}`
 	// and not specifying the key at all.
 	Properties *map[interface{}]interface{}
+
+	Consumes map[string]releaseJobProvider
+}
+
+type releaseJobProvider struct {
+	Instances  []releaseJobProviderInstance
+	Properties *map[interface{}]interface{}
+}
+
+type releaseJobProviderInstance struct {
+	Address string
 }
 
 type stemcellRef struct {
@@ -232,6 +243,37 @@ func (p *parser) parseJobManifests(rawJobs []job) ([]Job, error) {
 					}
 
 					ref.Properties = &properties
+				}
+
+				if rawJobRef.Consumes != nil {
+					consumes := ReleaseJobConsumers{}
+
+					for consumeName, provider := range rawJobRef.Consumes {
+						consume := ReleaseJobProvider{}
+
+						if provider.Properties != nil {
+							properties, err := biproperty.BuildMap(*provider.Properties)
+							if err != nil {
+								return []Job{}, bosherr.WrapErrorf(err, "Parsing release job consumes properties: %#v", provider.Properties)
+							}
+
+							consume.Properties = &properties
+						}
+
+						if provider.Instances != nil {
+							instances := []ReleaseJobProviderInstance{}
+
+							for _, instance := range provider.Instances {
+								instances = append(instances, ReleaseJobProviderInstance{Address: instance.Address})
+							}
+
+							consume.Instances = &instances
+						}
+
+						consumes[consumeName] = consume
+					}
+
+					ref.Consumes = &consumes
 				}
 
 				releaseJobRefs[i] = ref

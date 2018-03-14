@@ -24,6 +24,7 @@ type Job struct {
 	PackageNames []string
 	Packages     []boshpkg.Compilable
 	Properties   map[string]PropertyDefinition
+	// Consumes TODO // validation
 
 	extractedPath string
 	fs            boshsys.FileSystem

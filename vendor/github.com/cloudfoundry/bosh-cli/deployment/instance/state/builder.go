@@ -78,12 +78,45 @@ func (b *builder) Build(jobName string, instanceID int, deploymentManifest bidep
 		releaseJobProperties[releaseJob.Name] = releaseJob.Properties
 	}
 
+	releaseJobConsumes := make(map[string]*biproperty.Map)
+	for _, releaseJob := range deploymentJob.Templates {
+		if releaseJob.Consumes != nil {
+			mapmap := biproperty.Map{}
+
+			for name, provider := range *releaseJob.Consumes {
+				mapmapmap := biproperty.Map{}
+
+				if provider.Instances != nil {
+					instances := []map[string]string{}
+
+					for _, instance := range *provider.Instances {
+						instances = append(instances, map[string]string{
+							"address": instance.Address,
+						})
+					}
+
+					mapmapmap["instances"] = biproperty.Property(instances)
+				}
+
+				if provider.Properties != nil {
+					mapmapmap["properties"] = provider.Properties
+				}
+
+				mapmap[name] = mapmapmap
+			}
+
+			releaseJobConsumes[releaseJob.Name] = &mapmap
+		} else {
+			releaseJobConsumes[releaseJob.Name] = nil
+		}
+	}
+
 	defaultAddress, err := b.defaultAddress(initialState.NetworkInterfaces(), agentState)
 	if err != nil {
 		return nil, err
 	}
 
-	renderedJobTemplates, err := b.renderJobTemplates(releaseJobs, releaseJobProperties, deploymentJob.Properties, deploymentManifest.Properties, deploymentManifest.Name, defaultAddress, stage)
+	renderedJobTemplates, err := b.renderJobTemplates(releaseJobs, releaseJobProperties, releaseJobConsumes, deploymentJob.Properties, deploymentManifest.Properties, deploymentManifest.Name, defaultAddress, stage)
 	if err != nil {
 		return nil, bosherr.WrapErrorf(err, "Rendering job templates for instance '%s/%d'", jobName, instanceID)
 	}
@@ -183,6 +216,7 @@ func (b *builder) resolveJobs(jobRefs []bideplmanifest.ReleaseJobRef) ([]bireljo
 func (b *builder) renderJobTemplates(
 	releaseJobs []bireljob.Job,
 	releaseJobProperties map[string]*biproperty.Map,
+	releaseJobConsumes map[string]*biproperty.Map,
 	jobProperties biproperty.Map,
 	globalProperties biproperty.Map,
 	deploymentName string,
@@ -194,7 +228,7 @@ func (b *builder) renderJobTemplates(
 		blobID                 string
 	)
 	err := stage.Perform("Rendering job templates", func() error {
-		renderedJobList, err := b.jobListRenderer.Render(releaseJobs, releaseJobProperties, jobProperties, globalProperties, deploymentName, address)
+		renderedJobList, err := b.jobListRenderer.Render(releaseJobs, releaseJobProperties, releaseJobConsumes, jobProperties, globalProperties, deploymentName, address)
 		if err != nil {
 			return err
 		}
