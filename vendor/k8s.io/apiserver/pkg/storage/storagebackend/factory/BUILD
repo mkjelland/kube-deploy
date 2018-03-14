@@ -9,7 +9,7 @@ load(
 go_test(
     name = "go_default_test",
     srcs = ["tls_test.go"],
-    embed = [":go_default_library"],
+    library = ":go_default_library",
     deps = [
         "//vendor/github.com/coreos/etcd/integration:go_default_library",
         "//vendor/github.com/coreos/etcd/pkg/transport:go_default_library",
@@ -32,7 +32,6 @@ go_library(
         "etcd3.go",
         "factory.go",
     ],
-    importpath = "k8s.io/apiserver/pkg/storage/storagebackend/factory",
     deps = [
         "//vendor/github.com/coreos/etcd/client:go_default_library",
         "//vendor/github.com/coreos/etcd/clientv3:go_default_library",

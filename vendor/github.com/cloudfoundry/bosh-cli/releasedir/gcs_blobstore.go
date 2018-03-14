@@ -99,10 +99,15 @@ func (b GCSBlobstore) client() (*gcsclient.GCSBlobstore, error) {
 		return nil, bosherr.WrapError(err, "Reading config")
 	}
 
-	client, err := gcsclient.New(context.Background(), &conf)
+	_, gcsSDK, err := gcsclient.NewSDK(conf)
+	if err != nil {
+		return nil, bosherr.WrapError(err, "Building client SDK")
+	}
+
+	client, err := gcsclient.New(context.Background(), gcsSDK, &conf)
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Validating config")
 	}
 
-	return client, nil
+	return &client, nil
 }

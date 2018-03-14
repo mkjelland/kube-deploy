@@ -548,9 +548,7 @@ type GdataMedia struct {
 	Inline string `json:"inline,omitempty"`
 
 	// IsPotentialRetry: gdata
-	//
-	// Default: true
-	IsPotentialRetry *bool `json:"isPotentialRetry,omitempty"`
+	IsPotentialRetry bool `json:"isPotentialRetry,omitempty"`
 
 	// Length: gdata
 	Length int64 `json:"length,omitempty,string"`
@@ -2118,7 +2116,7 @@ func (c *MediaDownloadCall) Do(opts ...googleapi.CallOption) (*GdataMedia, error
 	//   ],
 	//   "parameters": {
 	//     "resourceName": {
-	//       "description": "Name of the media that is being downloaded.",
+	//       "description": "Name of the media that is being downloaded.  See\nReadRequest.resource_name.",
 	//       "location": "path",
 	//       "pattern": "^.+$",
 	//       "required": true,

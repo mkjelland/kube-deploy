@@ -41,6 +41,7 @@ func NewREST(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) *REST
 	strategy := NewStrategy(scheme)
 
 	store := &genericregistry.Store{
+		Copier:                   scheme,
 		NewFunc:                  func() runtime.Object { return &apiextensions.CustomResourceDefinition{} },
 		NewListFunc:              func() runtime.Object { return &apiextensions.CustomResourceDefinitionList{} },
 		PredicateFunc:            MatchCustomResourceDefinition,
@@ -62,7 +63,7 @@ var _ rest.ShortNamesProvider = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
-	return []string{"crd", "crds"}
+	return []string{"crd"}
 }
 
 // Delete adds the CRD finalizer to the list
@@ -167,6 +168,6 @@ func (r *StatusREST) New() runtime.Object {
 }
 
 // Update alters the status subset of an object.
-func (r *StatusREST) Update(ctx genericapirequest.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc) (runtime.Object, bool, error) {
-	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation)
+func (r *StatusREST) Update(ctx genericapirequest.Context, name string, objInfo rest.UpdatedObjectInfo) (runtime.Object, bool, error) {
+	return r.store.Update(ctx, name, objInfo)
 }

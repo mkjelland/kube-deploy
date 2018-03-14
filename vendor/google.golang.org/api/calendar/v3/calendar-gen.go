@@ -755,7 +755,7 @@ type ConferenceData struct {
 	// Can be used by developers to keep track of conferences, should not be
 	// displayed to users.
 	// Values for solution types:
-	// - "eventHangout": unset.
+	// - "eventHangout": unset
 	// - "eventNamedHangout": the name of the Hangout.
 	// - "hangoutsMeet": the 10-letter meeting code, for example
 	// "aaa-bbbb-ccc".  Optional.
@@ -763,7 +763,7 @@ type ConferenceData struct {
 
 	// ConferenceSolution: The conference solution, such as Hangouts or
 	// Hangouts Meet.
-	// Unset for a conference with a failed create request.
+	// Unset for a conference with failed create request.
 	// Either conferenceSolution and at least one entryPoint, or
 	// createRequest is required.
 	ConferenceSolution *ConferenceSolution `json:"conferenceSolution,omitempty"`
@@ -787,15 +787,11 @@ type ConferenceData struct {
 	// HTML. The maximum length is 2048 characters. Optional.
 	Notes string `json:"notes,omitempty"`
 
-	// Parameters: Additional properties related to a conference. An example
-	// would be a solution-specific setting for enabling video streaming.
-	Parameters *ConferenceParameters `json:"parameters,omitempty"`
-
 	// Signature: The signature of the conference data.
 	// Genereated on server side. Must be preserved while copying the
 	// conference data between events, otherwise the conference data will
 	// not be copied.
-	// Unset for a conference with a failed create request.
+	// Unset for a conference with failed create request.
 	// Optional for a conference with a pending create request.
 	Signature string `json:"signature,omitempty"`
 
@@ -818,60 +814,6 @@ type ConferenceData struct {
 
 func (s *ConferenceData) MarshalJSON() ([]byte, error) {
 	type NoMethod ConferenceData
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-type ConferenceParameters struct {
-	// AddOnParameters: Additional add-on specific data.
-	AddOnParameters *ConferenceParametersAddOnParameters `json:"addOnParameters,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "AddOnParameters") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "AddOnParameters") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ConferenceParameters) MarshalJSON() ([]byte, error) {
-	type NoMethod ConferenceParameters
-	raw := NoMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-type ConferenceParametersAddOnParameters struct {
-	Parameters map[string]string `json:"parameters,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Parameters") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Parameters") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *ConferenceParametersAddOnParameters) MarshalJSON() ([]byte, error) {
-	type NoMethod ConferenceParametersAddOnParameters
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -946,7 +888,7 @@ func (s *ConferenceRequestStatus) MarshalJSON() ([]byte, error) {
 }
 
 type ConferenceSolution struct {
-	// IconUri: The user-visible icon for this solution.
+	// IconUri: The user-visible icon for this solution. Read-only.
 	IconUri string `json:"iconUri,omitempty"`
 
 	// Key: The key which can uniquely identify the conference solution for
@@ -954,6 +896,7 @@ type ConferenceSolution struct {
 	Key *ConferenceSolutionKey `json:"key,omitempty"`
 
 	// Name: The user-visible name of this solution. Not localized.
+	// Read-only.
 	Name string `json:"name,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "IconUri") to
@@ -987,7 +930,7 @@ type ConferenceSolutionKey struct {
 	// The possible values are:
 	// - "eventHangout" for Hangouts for consumers
 	// (http://hangouts.google.com)
-	// - "eventNamedHangout" for classic Hangouts for G Suite users
+	// - "eventNamedHangout" for Classic Hangouts for GSuite users
 	// (http://hangouts.google.com)
 	// - "hangoutsMeet" for Hangouts Meet (http://meet.google.com)
 	Type string `json:"type,omitempty"`
@@ -1055,7 +998,7 @@ func (s *CreateConferenceRequest) MarshalJSON() ([]byte, error) {
 }
 
 type EntryPoint struct {
-	// AccessCode: The access code to access the conference. The maximum
+	// AccessCode: The Access Code to access the conference. The maximum
 	// length is 128 characters.
 	// When creating new conference data, populate only the subset of
 	// {meetingCode, accessCode, passcode, password, pin} fields that match
@@ -1078,17 +1021,17 @@ type EntryPoint struct {
 	// conference.
 	EntryPointType string `json:"entryPointType,omitempty"`
 
-	// Label: The label for the URI. Visible to end users. Not localized.
-	// The maximum length is 512 characters.
+	// Label: The label for the URI.Visible to end users. Not localized. The
+	// maximum length is 512 characters.
 	// Examples:
 	// - for video: meet.google.com/aaa-bbbb-ccc
 	// - for phone: +1 123 268 2601
-	// - for sip: 12345678@altostrat.com
+	// - for sip: sip:12345678@myprovider.com
 	// - for more: should not be filled
 	// Optional.
 	Label string `json:"label,omitempty"`
 
-	// MeetingCode: The meeting code to access the conference. The maximum
+	// MeetingCode: The Meeting Code to access the conference. The maximum
 	// length is 128 characters.
 	// When creating new conference data, populate only the subset of
 	// {meetingCode, accessCode, passcode, password, pin} fields that match
@@ -1097,7 +1040,7 @@ type EntryPoint struct {
 	// Optional.
 	MeetingCode string `json:"meetingCode,omitempty"`
 
-	// Passcode: The passcode to access the conference. The maximum length
+	// Passcode: The Passcode to access the conference. The maximum length
 	// is 128 characters.
 	// When creating new conference data, populate only the subset of
 	// {meetingCode, accessCode, passcode, password, pin} fields that match
@@ -1105,7 +1048,7 @@ type EntryPoint struct {
 	// fields should be displayed.
 	Passcode string `json:"passcode,omitempty"`
 
-	// Password: The password to access the conference. The maximum length
+	// Password: The Password to access the conference. The maximum length
 	// is 128 characters.
 	// When creating new conference data, populate only the subset of
 	// {meetingCode, accessCode, passcode, password, pin} fields that match
@@ -1123,7 +1066,7 @@ type EntryPoint struct {
 	// Optional.
 	Pin string `json:"pin,omitempty"`
 
-	// Uri: The URI of the entry point. The maximum length is 1300
+	// Uri: The "URI" of the entry point. The maximum length is 1300
 	// characters.
 	// Format:
 	// - for video, http: or https: schema is required.

@@ -25,11 +25,11 @@ var windowsCommands = map[string]Command{
 	},
 	"stderr": Command{
 		Name: "powershell",
-		Args: []string{"[Console]::Error.WriteLine('error-output')"},
+		Args: []string{`"[Console]::Error.WriteLine('error-output')"`},
 	},
 	"exit": Command{
-		Name: "powershell",
-		Args: []string{fmt.Sprintf("exit %d", ErrExitCode)},
+		Name: fmt.Sprintf("exit %d", ErrExitCode),
+		Args: []string{},
 	},
 	"ls": Command{
 		Name:       "powershell",
@@ -380,7 +380,11 @@ var _ = Describe("execCmdRunner", func() {
 		It("run command with error with args", func() {
 			stdout, stderr, status, err := runner.RunCommand(FalseExePath, "second arg")
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(fmt.Sprintf("Running command: '%s second arg', stdout: '', stderr: '': exit status 1", FalseExePath)))
+			errMsg := fmt.Sprintf("Running command: '%s second arg', stdout: '', stderr: '': exit status 1", FalseExePath)
+			if runtime.GOOS == "windows" {
+				errMsg = fmt.Sprintf("Running command: 'powershell %s second arg', stdout: '', stderr: '': exit status 1", FalseExePath)
+			}
+			Expect(err.Error()).To(Equal(errMsg))
 			Expect(stderr).To(BeEmpty())
 			Expect(stdout).To(BeEmpty())
 			Expect(status).To(Equal(1))

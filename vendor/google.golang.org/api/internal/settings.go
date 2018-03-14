@@ -20,7 +20,6 @@ import (
 	"net/http"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
 )
 
@@ -30,7 +29,6 @@ type DialSettings struct {
 	Endpoint        string
 	Scopes          []string
 	TokenSource     oauth2.TokenSource
-	Credentials     *google.DefaultCredentials
 	CredentialsFile string // if set, Token Source is ignored.
 	UserAgent       string
 	APIKey          string
@@ -42,15 +40,9 @@ type DialSettings struct {
 
 // Validate reports an error if ds is invalid.
 func (ds *DialSettings) Validate() error {
-	hasCreds := ds.APIKey != "" || ds.TokenSource != nil || ds.CredentialsFile != "" || ds.Credentials != nil
+	hasCreds := ds.APIKey != "" || ds.TokenSource != nil || ds.CredentialsFile != ""
 	if ds.NoAuth && hasCreds {
 		return errors.New("options.WithoutAuthentication is incompatible with any option that provides credentials")
-	}
-	// Credentials should not appear with other options.
-	// We currently allow TokenSource and CredentialsFile to coexist.
-	// TODO(jba): make TokenSource & CredentialsFile an error (breaking change).
-	if ds.Credentials != nil && (ds.APIKey != "" || ds.TokenSource != nil || ds.CredentialsFile != "") {
-		return errors.New("multiple credential options provided")
 	}
 	if ds.HTTPClient != nil && ds.GRPCConn != nil {
 		return errors.New("WithHTTPClient is incompatible with WithGRPCConn")

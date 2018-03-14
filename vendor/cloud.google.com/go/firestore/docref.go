@@ -54,9 +54,7 @@ func (d *DocumentRef) Collection(id string) *CollectionRef {
 	return newCollRefWithParent(d.Parent.c, d, id)
 }
 
-// Get retrieves the document. It returns a NotFound error if the document does not exist.
-// You can test for NotFound with
-//    grpc.Code(err) == codes.NotFound
+// Get retrieves the document. It returns an error if the document does not exist.
 func (d *DocumentRef) Get(ctx context.Context) (*DocumentSnapshot, error) {
 	if err := checkTransaction(ctx); err != nil {
 		return nil, err
@@ -66,6 +64,7 @@ func (d *DocumentRef) Get(ctx context.Context) (*DocumentSnapshot, error) {
 	}
 	doc, err := d.Parent.c.c.GetDocument(withResourceHeader(ctx, d.Parent.c.path()),
 		&pb.GetDocumentRequest{Name: d.Path})
+	// TODO(jba): verify that GetDocument returns NOT_FOUND.
 	if err != nil {
 		return nil, err
 	}
@@ -148,62 +147,107 @@ func (d *DocumentRef) newSetWrites(data interface{}, opts []SetOption) ([]*pb.Wr
 	if d == nil {
 		return nil, errNilDocRef
 	}
-	if data == nil {
-		return nil, errors.New("firestore: nil document contents")
-	}
-	if len(opts) == 0 { // Set without merge
-		doc, serverTimestampPaths, err := toProtoDocument(data)
-		if err != nil {
-			return nil, err
-		}
-		doc.Name = d.Path
-		return d.newUpdateWithTransform(doc, nil, nil, serverTimestampPaths, true), nil
-	}
-	// Set with merge.
-	// This is just like Update, except for the existence precondition.
-	// So we turn data into a list of (FieldPath, interface{}) pairs (fpv's), as we do
-	// for Update.
-	fieldPaths, allPaths, err := processSetOptions(opts)
+	origFieldPaths, allPaths, err := processSetOptions(opts)
 	if err != nil {
 		return nil, err
 	}
-	var fpvs []fpv
-	v := reflect.ValueOf(data)
+	doc, serverTimestampPaths, err := toProtoDocument(data)
+	if err != nil {
+		return nil, err
+	}
+	if len(origFieldPaths) > 0 {
+		// Keep only data fields corresponding to the given field paths.
+		doc.Fields = applyFieldPaths(doc.Fields, origFieldPaths, nil)
+	}
+	doc.Name = d.Path
+
+	var fieldPaths []FieldPath
 	if allPaths {
-		// Set with MergeAll. Collect all the leaves of the map.
+		// MergeAll was passed. Check that the data is a map, and extract its field paths.
+		v := reflect.ValueOf(data)
 		if v.Kind() != reflect.Map {
 			return nil, errors.New("firestore: MergeAll can only be specified with map data")
 		}
-		fpvsFromData(v, nil, &fpvs)
-	} else {
-		// Set with merge paths.  Collect only the values at the given paths.
+		fieldPaths = fieldPathsFromMap(v, nil)
+	} else if len(origFieldPaths) > 0 {
+		// Remove server timestamp paths that are not in the list of paths to merge.
+		// Note: this is technically O(n^2), but it is unlikely that there is more
+		// than one server timestamp path.
+		serverTimestampPaths = removePathsIf(serverTimestampPaths, func(fp FieldPath) bool {
+			return !fp.in(origFieldPaths)
+		})
+		// Remove server timestamp fields from fieldPaths. Those fields were removed
+		// from the document by toProtoDocument, so they should not be in the update
+		// mask.
+		// Note: this is technically O(n^2), but it is unlikely that there is
+		// more than one server timestamp path.
+		fieldPaths = removePathsIf(origFieldPaths, func(fp FieldPath) bool {
+			return fp.in(serverTimestampPaths)
+		})
+		// Check that all the remaining field paths in the merge option are in the document.
 		for _, fp := range fieldPaths {
-			val, err := getAtPath(v, fp)
-			if err != nil {
+			if _, err := valueAtPath(fp, doc.Fields); err != nil {
 				return nil, err
 			}
-			fpvs = append(fpvs, fpv{fp, val})
 		}
 	}
-	return d.fpvsToWrites(fpvs, nil)
+	return d.newUpdateWithTransform(doc, fieldPaths, nil, serverTimestampPaths, len(opts) == 0), nil
 }
 
-// fpvsFromData converts v into a list of (FieldPath, value) pairs.
-func fpvsFromData(v reflect.Value, prefix FieldPath, fpvs *[]fpv) {
+// Delete deletes the document. If the document doesn't exist, it does nothing
+// and returns no error.
+func (d *DocumentRef) Delete(ctx context.Context, preconds ...Precondition) (*WriteResult, error) {
+	ws, err := d.newDeleteWrites(preconds)
+	if err != nil {
+		return nil, err
+	}
+	return d.Parent.c.commit1(ctx, ws)
+}
+
+// Create a new map that contains only the field paths in fps.
+func applyFieldPaths(fields map[string]*pb.Value, fps []FieldPath, root FieldPath) map[string]*pb.Value {
+	r := map[string]*pb.Value{}
+	for k, v := range fields {
+		kpath := root.with(k)
+		if kpath.in(fps) {
+			r[k] = v
+		} else if mv := v.GetMapValue(); mv != nil {
+			if m2 := applyFieldPaths(mv.Fields, fps, kpath); m2 != nil {
+				r[k] = &pb.Value{&pb.Value_MapValue{&pb.MapValue{m2}}}
+			}
+		}
+	}
+	if len(r) == 0 {
+		return nil
+	}
+	return r
+}
+
+func fieldPathsFromMap(vmap reflect.Value, prefix FieldPath) []FieldPath {
+	// vmap is a map and its keys are strings.
+	// Each map key denotes a field; no splitting or escaping.
+	var fps []FieldPath
+	for _, k := range vmap.MapKeys() {
+		v := vmap.MapIndex(k)
+		fp := prefix.with(k.String())
+		if vm := extractMap(v); vm.IsValid() {
+			fps = append(fps, fieldPathsFromMap(vm, fp)...)
+		} else if v.Interface() != ServerTimestamp {
+			// ServerTimestamp fields do not go into the update mask.
+			fps = append(fps, fp)
+		}
+	}
+	return fps
+}
+
+func extractMap(v reflect.Value) reflect.Value {
 	switch v.Kind() {
 	case reflect.Map:
-		for _, k := range v.MapKeys() {
-			fpvsFromData(v.MapIndex(k), prefix.with(k.String()), fpvs)
-		}
+		return v
 	case reflect.Interface:
-		fpvsFromData(v.Elem(), prefix, fpvs)
-
+		return extractMap(v.Elem())
 	default:
-		var val interface{}
-		if v.IsValid() {
-			val = v.Interface()
-		}
-		*fpvs = append(*fpvs, fpv{prefix, val})
+		return reflect.Value{}
 	}
 }
 
@@ -217,16 +261,6 @@ func removePathsIf(fps []FieldPath, pred func(FieldPath) bool) []FieldPath {
 		}
 	}
 	return result
-}
-
-// Delete deletes the document. If the document doesn't exist, it does nothing
-// and returns no error.
-func (d *DocumentRef) Delete(ctx context.Context, preconds ...Precondition) (*WriteResult, error) {
-	ws, err := d.newDeleteWrites(preconds)
-	if err != nil {
-		return nil, err
-	}
-	return d.Parent.c.commit1(ctx, ws)
 }
 
 func (d *DocumentRef) newDeleteWrites(preconds []Precondition) ([]*pb.Write, error) {
@@ -247,69 +281,38 @@ func (d *DocumentRef) newUpdatePathWrites(updates []Update, preconds []Precondit
 	if len(updates) == 0 {
 		return nil, errors.New("firestore: no paths to update")
 	}
+	var fps []FieldPath
 	var fpvs []fpv
 	for _, u := range updates {
 		v, err := u.process()
 		if err != nil {
 			return nil, err
 		}
+		fps = append(fps, v.fieldPath)
 		fpvs = append(fpvs, v)
+	}
+	if err := checkNoDupOrPrefix(fps); err != nil {
+		return nil, err
+	}
+	m := createMapFromUpdates(fpvs)
+	return d.newUpdateWrites(m, fps, preconds)
+}
+
+// newUpdateWrites creates Write operations for an update.
+func (d *DocumentRef) newUpdateWrites(data interface{}, fieldPaths []FieldPath, preconds []Precondition) ([]*pb.Write, error) {
+	if d == nil {
+		return nil, errNilDocRef
 	}
 	pc, err := processPreconditionsForUpdate(preconds)
 	if err != nil {
 		return nil, err
 	}
-	return d.fpvsToWrites(fpvs, pc)
-}
-
-func (d *DocumentRef) fpvsToWrites(fpvs []fpv, pc *pb.Precondition) ([]*pb.Write, error) {
-	// Make sure there are no duplications or prefixes among the field paths.
-	var fps []FieldPath
-	for _, fpv := range fpvs {
-		fps = append(fps, fpv.fieldPath)
-	}
-	if err := checkNoDupOrPrefix(fps); err != nil {
+	doc, serverTimestampPaths, err := toProtoDocument(data)
+	if err != nil {
 		return nil, err
 	}
-
-	// Process each fpv.
-	var updatePaths, transformPaths []FieldPath
-	doc := &pb.Document{
-		Name:   d.Path,
-		Fields: map[string]*pb.Value{},
-	}
-	for _, fpv := range fpvs {
-		switch fpv.value {
-		case Delete:
-			// Send the field path without a corresponding value.
-			updatePaths = append(updatePaths, fpv.fieldPath)
-
-		case ServerTimestamp:
-			// Use the path in a transform operation.
-			transformPaths = append(transformPaths, fpv.fieldPath)
-
-		default:
-			updatePaths = append(updatePaths, fpv.fieldPath)
-			// Convert the value to a proto and put it into the document.
-			v := reflect.ValueOf(fpv.value)
-			pv, sawServerTimestamp, err := toProtoValue(v)
-			if err != nil {
-				return nil, err
-			}
-			setAtPath(doc.Fields, fpv.fieldPath, pv)
-			// Also accumulate any serverTimestamp values within the value.
-			if sawServerTimestamp {
-				stps, err := extractTransformPaths(v, nil)
-				if err != nil {
-					return nil, err
-				}
-				for _, p := range stps {
-					transformPaths = append(transformPaths, fpv.fieldPath.concat(p))
-				}
-			}
-		}
-	}
-	return d.newUpdateWithTransform(doc, updatePaths, pc, transformPaths, false), nil
+	doc.Name = d.Path
+	return d.newUpdateWithTransform(doc, fieldPaths, pc, serverTimestampPaths, false), nil
 }
 
 var requestTimeTransform = &pb.DocumentTransform_FieldTransform_SetToServerValue{
@@ -379,11 +382,11 @@ func (d *DocumentRef) newTransform(serverTimestampFieldPaths []FieldPath, pc *pb
 type sentinel int
 
 const (
-	// Delete is used as a value in a call to Update or Set with merge to indicate
-	// that the corresponding key should be deleted.
+	// Delete is used as a value in a call to UpdateMap to indicate that the
+	// corresponding key should be deleted.
 	Delete sentinel = iota
 
-	// ServerTimestamp is used as a value in a call to Update to indicate that the
+	// ServerTimestamp is used as a value in a call to UpdateMap to indicate that the
 	// key's value should be set to the time at which the server processed
 	// the request.
 	ServerTimestamp
@@ -429,20 +432,19 @@ type fpv struct {
 	value     interface{}
 }
 
-func (u *Update) process() (fpv, error) {
+func (u *Update) process() (v fpv, err error) {
 	if (u.Path != "") == (u.FieldPath != nil) {
-		return fpv{}, fmt.Errorf("firestore: update %+v should have exactly one of Path or FieldPath", u)
+		return v, fmt.Errorf("firestore: update %+v should have exactly one of Path or FieldPath", u)
 	}
 	fp := u.FieldPath
-	var err error
 	if fp == nil {
 		fp, err = parseDotSeparatedString(u.Path)
 		if err != nil {
-			return fpv{}, err
+			return v, err
 		}
 	}
 	if err := fp.validate(); err != nil {
-		return fpv{}, err
+		return v, err
 	}
 	return fpv{fp, u.Value}, nil
 }

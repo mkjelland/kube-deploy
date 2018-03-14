@@ -1,4 +1,4 @@
-// Package cloudresourcemanager provides access to the Cloud Resource Manager API.
+// Package cloudresourcemanager provides access to the Google Cloud Resource Manager API.
 //
 // See https://cloud.google.com/resource-manager
 //
@@ -43,7 +43,7 @@ var _ = ctxhttp.Do
 const apiId = "cloudresourcemanager:v2beta1"
 const apiName = "cloudresourcemanager"
 const apiVersion = "v2beta1"
-const basePath = "https://content-cloudresourcemanager.googleapis.com/"
+const basePath = "https://cloudresourcemanager.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
@@ -99,7 +99,7 @@ type FoldersService struct {
 // log_types
 // specified in each AuditConfig are enabled, and the exempted_members
 // in each
-// AuditLogConfig are exempted.
+// AuditConfig are exempted.
 //
 // Example Policy with multiple AuditConfigs:
 //
@@ -665,7 +665,7 @@ func (s *Operation) MarshalJSON() ([]byte, error) {
 //     }
 //
 // For a description of IAM and its features, see the
-// [IAM developer's guide](https://cloud.google.com/iam/docs).
+// [IAM developer's guide](https://cloud.google.com/iam).
 type Policy struct {
 	// AuditConfigs: Specifies cloud audit logging configuration for this
 	// policy.
@@ -695,7 +695,7 @@ type Policy struct {
 	// policy is overwritten blindly.
 	Etag string `json:"etag,omitempty"`
 
-	// Version: Deprecated.
+	// Version: Version of the `Policy`. The default version is 0.
 	Version int64 `json:"version,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1758,7 +1758,7 @@ func (c *FoldersListCall) Parent(parent string) *FoldersListCall {
 // ShowDeleted sets the optional parameter "showDeleted": Controls
 // whether Folders in the
 // DELETE_REQUESTED
-// state should be returned. Defaults to false. This field is optional.
+// state should be returned.
 func (c *FoldersListCall) ShowDeleted(showDeleted bool) *FoldersListCall {
 	c.urlParams_.Set("showDeleted", fmt.Sprint(showDeleted))
 	return c
@@ -1878,7 +1878,7 @@ func (c *FoldersListCall) Do(opts ...googleapi.CallOption) (*ListFoldersResponse
 	//       "type": "string"
 	//     },
 	//     "showDeleted": {
-	//       "description": "Controls whether Folders in the\nDELETE_REQUESTED\nstate should be returned. Defaults to false. This field is optional.",
+	//       "description": "Controls whether Folders in the\nDELETE_REQUESTED\nstate should be returned.",
 	//       "location": "query",
 	//       "type": "boolean"
 	//     }

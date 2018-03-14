@@ -22,7 +22,6 @@ import (
 	"google.golang.org/grpc"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 func TestSettingsValidate(t *testing.T) {
@@ -33,7 +32,6 @@ func TestSettingsValidate(t *testing.T) {
 		{Scopes: []string{"s"}},
 		{CredentialsFile: "f"},
 		{TokenSource: dummyTS{}},
-		{CredentialsFile: "f", TokenSource: dummyTS{}}, // keep for backwards compatibility
 		{HTTPClient: &http.Client{}},
 		{GRPCConn: &grpc.ClientConn{}},
 		// Although NoAuth and Scopes are technically incompatible, too many
@@ -52,9 +50,6 @@ func TestSettingsValidate(t *testing.T) {
 		{NoAuth: true, APIKey: "x"},
 		{NoAuth: true, CredentialsFile: "f"},
 		{NoAuth: true, TokenSource: dummyTS{}},
-		{NoAuth: true, Credentials: &google.DefaultCredentials{}},
-		{Credentials: &google.DefaultCredentials{}, CredentialsFile: "f"},
-		{Credentials: &google.DefaultCredentials{}, TokenSource: dummyTS{}},
 		{HTTPClient: &http.Client{}, GRPCConn: &grpc.ClientConn{}},
 		{HTTPClient: &http.Client{}, GRPCDialOpts: []grpc.DialOption{grpc.WithInsecure()}},
 	} {

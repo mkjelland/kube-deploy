@@ -11,7 +11,6 @@ type Policy struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	TenantID    string   `json:"tenant_id"`
-	ProjectID   string   `json:"project_id"`
 	Audited     bool     `json:"audited"`
 	Shared      bool     `json:"shared"`
 	Rules       []string `json:"firewall_rules,omitempty"`

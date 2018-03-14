@@ -1,10 +1,10 @@
-// Copyright 2018 Google LLC
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     https://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -301,20 +301,9 @@ func TestDlpServiceRedactContent(t *testing.T) {
 		},
 	}
 	var items = []*dlppb.ContentItem{itemsElement}
-	var name2 string = "EMAIL_ADDRESS"
-	var infoType = &dlppb.InfoType{
-		Name: name2,
-	}
-	var replaceWith string = "REDACTED"
-	var replaceConfigsElement = &dlppb.RedactContentRequest_ReplaceConfig{
-		InfoType:    infoType,
-		ReplaceWith: replaceWith,
-	}
-	var replaceConfigs = []*dlppb.RedactContentRequest_ReplaceConfig{replaceConfigsElement}
 	var request = &dlppb.RedactContentRequest{
-		InspectConfig:  inspectConfig,
-		Items:          items,
-		ReplaceConfigs: replaceConfigs,
+		InspectConfig: inspectConfig,
+		Items:         items,
 	}
 
 	c, err := NewClient(context.Background(), clientOpt)
@@ -358,20 +347,9 @@ func TestDlpServiceRedactContentError(t *testing.T) {
 		},
 	}
 	var items = []*dlppb.ContentItem{itemsElement}
-	var name2 string = "EMAIL_ADDRESS"
-	var infoType = &dlppb.InfoType{
-		Name: name2,
-	}
-	var replaceWith string = "REDACTED"
-	var replaceConfigsElement = &dlppb.RedactContentRequest_ReplaceConfig{
-		InfoType:    infoType,
-		ReplaceWith: replaceWith,
-	}
-	var replaceConfigs = []*dlppb.RedactContentRequest_ReplaceConfig{replaceConfigsElement}
 	var request = &dlppb.RedactContentRequest{
-		InspectConfig:  inspectConfig,
-		Items:          items,
-		ReplaceConfigs: replaceConfigs,
+		InspectConfig: inspectConfig,
+		Items:         items,
 	}
 
 	c, err := NewClient(context.Background(), clientOpt)
@@ -678,7 +656,7 @@ func TestDlpServiceListInspectFindings(t *testing.T) {
 
 	mockDlp.resps = append(mockDlp.resps[:0], expectedResponse)
 
-	var formattedName string = fmt.Sprintf("inspect/results/%s", "[RESULT]")
+	var formattedName string = ResultPath("[RESULT]")
 	var request = &dlppb.ListInspectFindingsRequest{
 		Name: formattedName,
 	}
@@ -707,7 +685,7 @@ func TestDlpServiceListInspectFindingsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDlp.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = fmt.Sprintf("inspect/results/%s", "[RESULT]")
+	var formattedName string = ResultPath("[RESULT]")
 	var request = &dlppb.ListInspectFindingsRequest{
 		Name: formattedName,
 	}

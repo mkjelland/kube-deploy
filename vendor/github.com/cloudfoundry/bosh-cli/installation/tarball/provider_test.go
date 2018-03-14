@@ -41,20 +41,6 @@ var _ = Describe("Provider", func() {
 	})
 
 	Describe("Get", func() {
-		Context("when URL starts with nothing", func() {
-			BeforeEach(func() {
-				source = newFakeSource("fake-file", "fake-sha1", "fake-description")
-				fs.WriteFileString("expanded-file-path", "")
-				fs.ExpandPathExpanded = "expanded-file-path"
-			})
-
-			It("returns expanded path to file", func() {
-				path, err := provider.Get(source, fakeStage)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(path).To(Equal("expanded-file-path"))
-			})
-		})
-
 		Context("when URL starts with file://", func() {
 			BeforeEach(func() {
 				source = newFakeSource("file://fake-file", "fake-sha1", "fake-description")
@@ -240,25 +226,15 @@ var _ = Describe("Provider", func() {
 			})
 		})
 
-		Context("when the URL has an unsupported scheme", func() {
+		Context("when URL does not start with either file:// or http(s)://", func() {
 			BeforeEach(func() {
-				source = newFakeSource("ftp://example.com", "fake-sha1", "fake-description")
+				source = newFakeSource("invalid-url", "fake-sha1", "fake-description")
 			})
 
 			It("returns an error", func() {
 				_, err := provider.Get(source, fakeStage)
-				Expect(err).To(MatchError(ContainSubstring("Unsupported scheme in URL 'ftp://example.com'")))
-			})
-		})
-
-		Context("when the URL is invalid", func() {
-			BeforeEach(func() {
-				source = newFakeSource("%%%%%%%%%", "fake-sha1", "fake-description")
-			})
-
-			It("returns an error", func() {
-				_, err := provider.Get(source, fakeStage)
-				Expect(err).To(MatchError(ContainSubstring("URL could not be parsed")))
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("Invalid source URL: 'invalid-url'"))
 			})
 		})
 	})

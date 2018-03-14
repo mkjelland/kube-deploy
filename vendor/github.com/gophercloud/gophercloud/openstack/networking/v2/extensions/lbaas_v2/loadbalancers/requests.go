@@ -20,7 +20,6 @@ type ListOpts struct {
 	Description        string `q:"description"`
 	AdminStateUp       *bool  `q:"admin_state_up"`
 	TenantID           string `q:"tenant_id"`
-	ProjectID          string `q:"project_id"`
 	ProvisioningStatus string `q:"provisioning_status"`
 	VipAddress         string `q:"vip_address"`
 	VipPortID          string `q:"vip_port_id"`
@@ -82,13 +81,9 @@ type CreateOpts struct {
 	// that belong to them or networks that are shared).
 	VipSubnetID string `json:"vip_subnet_id" required:"true"`
 
-	// TenantID is the UUID of the project who owns the Loadbalancer.
-	// Only administrative users can specify a project UUID other than their own.
+	// The UUID of the tenant who owns the Loadbalancer. Only administrative users
+	// can specify a tenant UUID other than their own.
 	TenantID string `json:"tenant_id,omitempty"`
-
-	// ProjectID is the UUID of the project who owns the Loadbalancer.
-	// Only administrative users can specify a project UUID other than their own.
-	ProjectID string `json:"project_id,omitempty"`
 
 	// The IP address of the Loadbalancer.
 	VipAddress string `json:"vip_address,omitempty"`

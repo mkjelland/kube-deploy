@@ -27,9 +27,8 @@ import (
 )
 
 const (
-	mimeTypeJSON        = "application/json"
-	mimeTypeOctetStream = "application/octet-stream"
-	mimeTypeFormPost    = "application/x-www-form-urlencoded"
+	mimeTypeJSON     = "application/json"
+	mimeTypeFormPost = "application/x-www-form-urlencoded"
 
 	headerAuthorization = "Authorization"
 	headerContentType   = "Content-Type"
@@ -163,11 +162,6 @@ func AsFormURLEncoded() PrepareDecorator {
 // "application/json".
 func AsJSON() PrepareDecorator {
 	return AsContentType(mimeTypeJSON)
-}
-
-// AsOctetStream returns a PrepareDecorator that adds the "application/octet-stream" Content-Type header.
-func AsOctetStream() PrepareDecorator {
-	return AsContentType(mimeTypeOctetStream)
 }
 
 // WithMethod returns a PrepareDecorator that sets the HTTP method of the passed request. The

@@ -18,7 +18,6 @@ type ListOptsBuilder interface {
 // `asc' or `desc'. Marker and Limit are used for pagination.
 type ListOpts struct {
 	TenantID     string `q:"tenant_id"`
-	ProjectID    string `q:"project_id"`
 	Name         string `q:"name"`
 	Description  string `q:"description"`
 	AdminStateUp bool   `q:"admin_state_up"`
@@ -70,7 +69,6 @@ type CreateOpts struct {
 	// an admin role in order to set this. Otherwise, this field is left unset
 	// and the caller will be the owner.
 	TenantID     string `json:"tenant_id,omitempty"`
-	ProjectID    string `json:"project_id,omitempty"`
 	Name         string `json:"name,omitempty"`
 	Description  string `json:"description,omitempty"`
 	AdminStateUp *bool  `json:"admin_state_up,omitempty"`

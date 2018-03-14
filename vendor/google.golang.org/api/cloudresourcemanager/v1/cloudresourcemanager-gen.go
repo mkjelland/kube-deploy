@@ -1,4 +1,4 @@
-// Package cloudresourcemanager provides access to the Cloud Resource Manager API.
+// Package cloudresourcemanager provides access to the Google Cloud Resource Manager API.
 //
 // See https://cloud.google.com/resource-manager
 //
@@ -43,7 +43,7 @@ var _ = ctxhttp.Do
 const apiId = "cloudresourcemanager:v1"
 const apiName = "cloudresourcemanager"
 const apiVersion = "v1"
-const basePath = "https://content-cloudresourcemanager.googleapis.com/"
+const basePath = "https://cloudresourcemanager.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
@@ -175,7 +175,7 @@ func (s *Ancestor) MarshalJSON() ([]byte, error) {
 // log_types
 // specified in each AuditConfig are enabled, and the exempted_members
 // in each
-// AuditLogConfig are exempted.
+// AuditConfig are exempted.
 //
 // Example Policy with multiple AuditConfigs:
 //
@@ -1542,14 +1542,11 @@ type Organization struct {
 	// @OutputOnly
 	CreationTime string `json:"creationTime,omitempty"`
 
-	// DisplayName: A human-readable string that refers to the Organization
-	// in the
-	// GCP Console UI. This string is set by the server and cannot
-	// be
-	// changed. The string will be set to the primary domain (for
-	// example,
-	// "google.com") of the G Suite customer that owns the
-	// organization.
+	// DisplayName: A friendly string to be used to refer to the
+	// Organization in the UI.
+	// Assigned by the server, set to the primary domain of the G
+	// Suite
+	// customer that owns the organization.
 	// @OutputOnly
 	DisplayName string `json:"displayName,omitempty"`
 
@@ -1613,8 +1610,8 @@ func (s *Organization) MarshalJSON() ([]byte, error) {
 // descendants will
 // be deleted.
 type OrganizationOwner struct {
-	// DirectoryCustomerId: The G Suite customer id used in the Directory
-	// API.
+	// DirectoryCustomerId: The Google for Work customer id used in the
+	// Directory API.
 	DirectoryCustomerId string `json:"directoryCustomerId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DirectoryCustomerId")
@@ -1676,7 +1673,7 @@ func (s *OrganizationOwner) MarshalJSON() ([]byte, error) {
 //     }
 //
 // For a description of IAM and its features, see the
-// [IAM developer's guide](https://cloud.google.com/iam/docs).
+// [IAM developer's guide](https://cloud.google.com/iam).
 type Policy struct {
 	// AuditConfigs: Specifies cloud audit logging configuration for this
 	// policy.
@@ -1706,7 +1703,7 @@ type Policy struct {
 	// policy is overwritten blindly.
 	Etag string `json:"etag,omitempty"`
 
-	// Version: Deprecated.
+	// Version: Version of the `Policy`. The default version is 0.
 	Version int64 `json:"version,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1971,7 +1968,7 @@ type SearchOrganizationsRequest struct {
 	//
 	// Organizations may be filtered by `owner.directoryCustomerId` or
 	// by
-	// `domain`, where the domain is a G Suite domain, for
+	// `domain`, where the domain is a Google for Work domain, for
 	// example:
 	//
 	// |Filter|Description|
@@ -5576,8 +5573,7 @@ type ProjectsCreateCall struct {
 // permission
 // `resourcemanager.projects.create` on the specified parent for the
 // new
-// project. The parent is identified by a specified ResourceId,
-// which must include both an ID and a type, such as organization.
+// project.
 func (r *ProjectsService) Create(project *Project) *ProjectsCreateCall {
 	c := &ProjectsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -5667,7 +5663,7 @@ func (c *ProjectsCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error
 	}
 	return ret, nil
 	// {
-	//   "description": "Request that a new Project be created. The result is an Operation which\ncan be used to track the creation process. It is automatically deleted\nafter a few hours, so there is no need to call DeleteOperation.\n\nOur SLO permits Project creation to take up to 30 seconds at the 90th\npercentile. As of 2016-08-29, we are observing 6 seconds 50th percentile\nlatency. 95th percentile latency is around 11 seconds. We recommend\npolling at the 5th second with an exponential backoff.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.create` on the specified parent for the new\nproject. The parent is identified by a specified ResourceId,\nwhich must include both an ID and a type, such as organization.",
+	//   "description": "Request that a new Project be created. The result is an Operation which\ncan be used to track the creation process. It is automatically deleted\nafter a few hours, so there is no need to call DeleteOperation.\n\nOur SLO permits Project creation to take up to 30 seconds at the 90th\npercentile. As of 2016-08-29, we are observing 6 seconds 50th percentile\nlatency. 95th percentile latency is around 11 seconds. We recommend\npolling at the 5th second with an exponential backoff.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.create` on the specified parent for the new\nproject.",
 	//   "flatPath": "v1/projects",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.projects.create",
@@ -6277,11 +6273,7 @@ type ProjectsGetIamPolicyCall struct {
 //
 // Authorization requires the Google IAM
 // permission
-// `resourcemanager.projects.getIamPolicy` on the project.
-//
-// For additional information about resource structure and
-// identification,
-// see [Resource Names](/apis/design/resource_names).
+// `resourcemanager.projects.getIamPolicy` on the project
 func (r *ProjectsService) GetIamPolicy(resource string, getiampolicyrequest *GetIamPolicyRequest) *ProjectsGetIamPolicyCall {
 	c := &ProjectsGetIamPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -6375,7 +6367,7 @@ func (c *ProjectsGetIamPolicyCall) Do(opts ...googleapi.CallOption) (*Policy, er
 	}
 	return ret, nil
 	// {
-	//   "description": "Returns the IAM access control policy for the specified Project.\nPermission is denied if the policy or the resource does not exist.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.getIamPolicy` on the project.\n\nFor additional information about resource structure and identification,\nsee [Resource Names](/apis/design/resource_names).",
+	//   "description": "Returns the IAM access control policy for the specified Project.\nPermission is denied if the policy or the resource does not exist.\n\nAuthorization requires the Google IAM permission\n`resourcemanager.projects.getIamPolicy` on the project",
 	//   "flatPath": "v1/projects/{resource}:getIamPolicy",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.projects.getIamPolicy",

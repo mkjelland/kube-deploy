@@ -8,7 +8,6 @@ load(
 go_library(
     name = "go_default_library",
     srcs = ["doc.go"],
-    importpath = "k8s.io/apiserver/plugin/pkg/audit",
 )
 
 filegroup(
@@ -22,7 +21,6 @@ filegroup(
     name = "all-srcs",
     srcs = [
         ":package-srcs",
-        "//staging/src/k8s.io/apiserver/plugin/pkg/audit/buffered:all-srcs",
         "//staging/src/k8s.io/apiserver/plugin/pkg/audit/log:all-srcs",
         "//staging/src/k8s.io/apiserver/plugin/pkg/audit/webhook:all-srcs",
     ],

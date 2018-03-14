@@ -92,23 +92,10 @@ func TestClientCollDocErrors(t *testing.T) {
 }
 
 func TestGetAll(t *testing.T) {
+	ctx := context.Background()
+	const dbPath = "projects/projectID/databases/(default)"
 	c, srv := newMock(t)
 	defer c.Close()
-	const dbPath = "projects/projectID/databases/(default)"
-	req := &pb.BatchGetDocumentsRequest{
-		Database: dbPath,
-		Documents: []string{
-			dbPath + "/documents/C/a",
-			dbPath + "/documents/C/b",
-			dbPath + "/documents/C/c",
-		},
-	}
-	testGetAll(t, c, srv, dbPath, func(drs []*DocumentRef) ([]*DocumentSnapshot, error) {
-		return c.GetAll(context.Background(), drs)
-	}, req)
-}
-
-func testGetAll(t *testing.T, c *Client, srv *mockServer, dbPath string, getAll func([]*DocumentRef) ([]*DocumentSnapshot, error), req *pb.BatchGetDocumentsRequest) {
 	wantPBDocs := []*pb.Document{
 		{
 			Name:       dbPath + "/documents/C/a",
@@ -124,7 +111,15 @@ func testGetAll(t *testing.T, c *Client, srv *mockServer, dbPath string, getAll 
 			Fields:     map[string]*pb.Value{"f": intval(1)},
 		},
 	}
-	srv.addRPC(req,
+	srv.addRPC(
+		&pb.BatchGetDocumentsRequest{
+			Database: dbPath,
+			Documents: []string{
+				dbPath + "/documents/C/a",
+				dbPath + "/documents/C/b",
+				dbPath + "/documents/C/c",
+			},
+		},
 		[]interface{}{
 			// deliberately put these out of order
 			&pb.BatchGetDocumentsResponse{
@@ -143,7 +138,7 @@ func testGetAll(t *testing.T, c *Client, srv *mockServer, dbPath string, getAll 
 	for _, name := range []string{"a", "b", "c"} {
 		docRefs = append(docRefs, coll.Doc(name))
 	}
-	docs, err := getAll(docRefs)
+	docs, err := c.GetAll(ctx, docRefs)
 	if err != nil {
 		t.Fatal(err)
 	}

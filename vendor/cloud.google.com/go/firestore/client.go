@@ -128,10 +128,6 @@ func (c *Client) GetAll(ctx context.Context, docRefs []*DocumentRef) ([]*Documen
 	if err := checkTransaction(ctx); err != nil {
 		return nil, err
 	}
-	return c.getAll(ctx, docRefs, nil)
-}
-
-func (c *Client) getAll(ctx context.Context, docRefs []*DocumentRef, tid []byte) ([]*DocumentSnapshot, error) {
 	var docNames []string
 	for _, dr := range docRefs {
 		if dr == nil {
@@ -142,9 +138,6 @@ func (c *Client) getAll(ctx context.Context, docRefs []*DocumentRef, tid []byte)
 	req := &pb.BatchGetDocumentsRequest{
 		Database:  c.path(),
 		Documents: docNames,
-	}
-	if tid != nil {
-		req.ConsistencySelector = &pb.BatchGetDocumentsRequest_Transaction{tid}
 	}
 	streamClient, err := c.c.BatchGetDocuments(withResourceHeader(ctx, req.Database), req)
 	if err != nil {

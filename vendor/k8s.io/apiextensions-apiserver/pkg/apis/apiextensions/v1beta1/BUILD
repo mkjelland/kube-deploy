@@ -22,7 +22,6 @@ go_library(
         "zz_generated.deepcopy.go",
         "zz_generated.defaults.go",
     ],
-    importpath = "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     deps = [
         "//vendor/github.com/gogo/protobuf/proto:go_default_library",
         "//vendor/github.com/gogo/protobuf/sortkeys:go_default_library",
@@ -60,7 +59,7 @@ go_test(
         "conversion_test.go",
         "marshal_test.go",
     ],
-    embed = [":go_default_library"],
+    library = ":go_default_library",
     deps = [
         "//vendor/k8s.io/apiextensions-apiserver/pkg/apis/apiextensions:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",

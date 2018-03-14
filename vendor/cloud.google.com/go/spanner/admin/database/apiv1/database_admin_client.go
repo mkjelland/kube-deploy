@@ -1,10 +1,10 @@
-// Copyright 2018 Google LLC
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     https://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -155,6 +155,28 @@ func (c *DatabaseAdminClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
 	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
+}
+
+// DatabaseAdminInstancePath returns the path for the instance resource.
+func DatabaseAdminInstancePath(project, instance string) string {
+	return "" +
+		"projects/" +
+		project +
+		"/instances/" +
+		instance +
+		""
+}
+
+// DatabaseAdminDatabasePath returns the path for the database resource.
+func DatabaseAdminDatabasePath(project, instance, database string) string {
+	return "" +
+		"projects/" +
+		project +
+		"/instances/" +
+		instance +
+		"/databases/" +
+		database +
+		""
 }
 
 // ListDatabases lists Cloud Spanner databases.

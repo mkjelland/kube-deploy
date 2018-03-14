@@ -183,7 +183,6 @@ func runRetryableNoWrap(ctx context.Context, f func(context.Context) error) erro
 			if !ok {
 				b = defaultBackoff.delay(retryCount)
 			}
-			tracePrintf(ctx, nil, "Backing off for %s, then retrying", b)
 			select {
 			case <-ctx.Done():
 				return errContextCanceled(ctx, funcErr)

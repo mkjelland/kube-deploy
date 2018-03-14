@@ -18,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	vkit "cloud.google.com/go/pubsub/apiv1"
 	"golang.org/x/net/context"
 	pb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
@@ -27,15 +26,16 @@ import (
 // when it is no longer needed.
 // subName is the full name of the subscription to pull messages from.
 // ctx is the context to use for acking messages and extending message deadlines.
-func newMessageIterator(ctx context.Context, subc *vkit.SubscriberClient, subName string, po *pullOptions) *streamingMessageIterator {
-	ps := newPullStream(ctx, subc, subName, int32(po.ackDeadline.Seconds()))
-	return newStreamingMessageIterator(ctx, ps, po)
+func newMessageIterator(ctx context.Context, s service, subName string, po *pullOptions) *streamingMessageIterator {
+	sp := s.newStreamingPuller(ctx, subName, int32(po.ackDeadline.Seconds()))
+	_ = sp.open() // error stored in sp
+	return newStreamingMessageIterator(ctx, sp, po)
 }
 
 type streamingMessageIterator struct {
 	ctx        context.Context
 	po         *pullOptions
-	ps         *pullStream
+	sp         *streamingPuller
 	kaTicker   *time.Ticker  // keep-alive (deadline extensions)
 	ackTicker  *time.Ticker  // message acks
 	nackTicker *time.Ticker  // message nacks (more frequent than acks)
@@ -51,7 +51,7 @@ type streamingMessageIterator struct {
 	err                error            // error from stream failure
 }
 
-func newStreamingMessageIterator(ctx context.Context, ps *pullStream, po *pullOptions) *streamingMessageIterator {
+func newStreamingMessageIterator(ctx context.Context, sp *streamingPuller, po *pullOptions) *streamingMessageIterator {
 	// TODO: make kaTicker frequency more configurable. (ackDeadline - 5s) is a
 	// reasonable default for now, because the minimum ack period is 10s. This
 	// gives us 5s grace.
@@ -63,7 +63,7 @@ func newStreamingMessageIterator(ctx context.Context, ps *pullStream, po *pullOp
 	nackTicker := time.NewTicker(100 * time.Millisecond)
 	it := &streamingMessageIterator{
 		ctx:                ctx,
-		ps:                 ps,
+		sp:                 sp,
 		po:                 po,
 		kaTicker:           kaTicker,
 		ackTicker:          ackTicker,
@@ -155,18 +155,13 @@ func (it *streamingMessageIterator) receive() ([]*Message, error) {
 		return nil, err
 	}
 	// Receive messages from stream. This may block indefinitely.
-	res, err := it.ps.Recv()
-	// The pullStream handles retries, so any error here is fatal.
+	msgs, err := it.sp.fetchMessages()
+	// The streamingPuller handles retries, so any error here
+	// is fatal.
 	if err != nil {
 		it.fail(err)
 		return nil, err
 	}
-	msgs, err := convertMessages(res.ReceivedMessages)
-	if err != nil {
-		it.fail(err)
-		return nil, err
-	}
-
 	// We received some messages. Remember them so we can keep them alive. Also,
 	// arrange for a receipt mod-ack (which will occur at the next firing of
 	// nackTicker).
@@ -193,7 +188,7 @@ func (it *streamingMessageIterator) sender() {
 	defer it.kaTicker.Stop()
 	defer it.ackTicker.Stop()
 	defer it.nackTicker.Stop()
-	defer it.ps.CloseSend()
+	defer it.sp.closeSend()
 
 	done := false
 	for !done {
@@ -239,7 +234,7 @@ func (it *streamingMessageIterator) sender() {
 				req.ModifyDeadlineAckIds = append(req.ModifyDeadlineAckIds, id)
 				req.ModifyDeadlineSeconds = append(req.ModifyDeadlineSeconds, s)
 			}
-			err := it.send(req)
+			err := it.sp.send(req)
 			if err != nil {
 				// The streamingPuller handles retries, so any error here
 				// is fatal to the iterator.
@@ -250,19 +245,6 @@ func (it *streamingMessageIterator) sender() {
 			it.mu.Unlock()
 		}
 	}
-}
-
-func (it *streamingMessageIterator) send(req *pb.StreamingPullRequest) error {
-	// Note: len(modAckIDs) == len(modSecs)
-	var rest *pb.StreamingPullRequest
-	for len(req.AckIds) > 0 || len(req.ModifyDeadlineAckIds) > 0 {
-		req, rest = splitRequest(req, maxPayload)
-		if err := it.ps.Send(req); err != nil {
-			return err
-		}
-		req = rest
-	}
-	return nil
 }
 
 // handleKeepAlives modifies the pending request to include deadline extensions

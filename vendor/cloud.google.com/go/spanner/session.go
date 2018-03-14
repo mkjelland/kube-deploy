@@ -20,12 +20,12 @@ import (
 	"container/heap"
 	"container/list"
 	"fmt"
-	"log"
 	"math/rand"
 	"strings"
 	"sync"
 	"time"
 
+	log "github.com/golang/glog"
 	"golang.org/x/net/context"
 
 	sppb "google.golang.org/genproto/googleapis/spanner/v1"
@@ -266,8 +266,8 @@ func (s *session) destroy(isExpire bool) bool {
 		_, e := s.client.DeleteSession(ctx, &sppb.DeleteSessionRequest{Name: s.getID()})
 		return e
 	})
-	if err != nil {
-		log.Printf("Failed to delete session %v. Error: %v", s.getID(), err)
+	if err != nil && log.V(2) {
+		log.Warningf("Failed to delete session %v. Error: %v", s.getID(), err)
 	}
 	return true
 }
@@ -443,7 +443,6 @@ func (p *sessionPool) shouldPrepareWrite() bool {
 }
 
 func (p *sessionPool) createSession(ctx context.Context) (*session, error) {
-	tracePrintf(ctx, nil, "Creating a new session")
 	doneCreate := func(done bool) {
 		p.mu.Lock()
 		if !done {
@@ -497,7 +496,6 @@ func (p *sessionPool) isHealthy(s *session) bool {
 // take returns a cached session if there are available ones; if there isn't any, it tries to allocate a new one.
 // Session returned by take should be used for read operations.
 func (p *sessionPool) take(ctx context.Context) (*sessionHandle, error) {
-	tracePrintf(ctx, nil, "Acquiring a read-only session")
 	ctx = contextWithOutgoingMetadata(ctx, p.md)
 	for {
 		var (
@@ -513,12 +511,8 @@ func (p *sessionPool) take(ctx context.Context) (*sessionHandle, error) {
 		if p.idleList.Len() > 0 {
 			// Idle sessions are available, get one from the top of the idle list.
 			s = p.idleList.Remove(p.idleList.Front()).(*session)
-			tracePrintf(ctx, map[string]interface{}{"sessionID": s.getID()},
-				"Acquired read-only session")
 		} else if p.idleWriteList.Len() > 0 {
 			s = p.idleWriteList.Remove(p.idleWriteList.Front()).(*session)
-			tracePrintf(ctx, map[string]interface{}{"sessionID": s.getID()},
-				"Acquired read-write session")
 		}
 		if s != nil {
 			s.setIdleList(nil)
@@ -535,10 +529,8 @@ func (p *sessionPool) take(ctx context.Context) (*sessionHandle, error) {
 		if (p.MaxOpened > 0 && p.numOpened >= p.MaxOpened) || (p.MaxBurst > 0 && p.createReqs >= p.MaxBurst) {
 			mayGetSession := p.mayGetSession
 			p.mu.Unlock()
-			tracePrintf(ctx, nil, "Waiting for read-only session to become available")
 			select {
 			case <-ctx.Done():
-				tracePrintf(ctx, nil, "Context done waiting for session")
 				return nil, errGetSessionTimeout()
 			case <-mayGetSession:
 			}
@@ -549,11 +541,8 @@ func (p *sessionPool) take(ctx context.Context) (*sessionHandle, error) {
 		p.createReqs++
 		p.mu.Unlock()
 		if s, err = p.createSession(ctx); err != nil {
-			tracePrintf(ctx, nil, "Error creating session: %v", err)
 			return nil, toSpannerError(err)
 		}
-		tracePrintf(ctx, map[string]interface{}{"sessionID": s.getID()},
-			"Created session")
 		return &sessionHandle{session: s}, nil
 	}
 }
@@ -561,7 +550,6 @@ func (p *sessionPool) take(ctx context.Context) (*sessionHandle, error) {
 // takeWriteSession returns a write prepared cached session if there are available ones; if there isn't any, it tries to allocate a new one.
 // Session returned should be used for read write transactions.
 func (p *sessionPool) takeWriteSession(ctx context.Context) (*sessionHandle, error) {
-	tracePrintf(ctx, nil, "Acquiring a read-write session")
 	ctx = contextWithOutgoingMetadata(ctx, p.md)
 	for {
 		var (
@@ -577,10 +565,8 @@ func (p *sessionPool) takeWriteSession(ctx context.Context) (*sessionHandle, err
 		if p.idleWriteList.Len() > 0 {
 			// Idle sessions are available, get one from the top of the idle list.
 			s = p.idleWriteList.Remove(p.idleWriteList.Front()).(*session)
-			tracePrintf(ctx, map[string]interface{}{"sessionID": s.getID()}, "Acquired read-write session")
 		} else if p.idleList.Len() > 0 {
 			s = p.idleList.Remove(p.idleList.Front()).(*session)
-			tracePrintf(ctx, map[string]interface{}{"sessionID": s.getID()}, "Acquired read-only session")
 		}
 		if s != nil {
 			s.setIdleList(nil)
@@ -596,10 +582,8 @@ func (p *sessionPool) takeWriteSession(ctx context.Context) (*sessionHandle, err
 			if (p.MaxOpened > 0 && p.numOpened >= p.MaxOpened) || (p.MaxBurst > 0 && p.createReqs >= p.MaxBurst) {
 				mayGetSession := p.mayGetSession
 				p.mu.Unlock()
-				tracePrintf(ctx, nil, "Waiting for read-write session to become available")
 				select {
 				case <-ctx.Done():
-					tracePrintf(ctx, nil, "Context done waiting for session")
 					return nil, errGetSessionTimeout()
 				case <-mayGetSession:
 				}
@@ -611,17 +595,12 @@ func (p *sessionPool) takeWriteSession(ctx context.Context) (*sessionHandle, err
 			p.createReqs++
 			p.mu.Unlock()
 			if s, err = p.createSession(ctx); err != nil {
-				tracePrintf(ctx, nil, "Error creating session: %v", err)
 				return nil, toSpannerError(err)
 			}
-			tracePrintf(ctx, map[string]interface{}{"sessionID": s.getID()},
-				"Created session")
 		}
 		if !s.isWritePrepared() {
 			if err = s.prepareForWrite(ctx); err != nil {
 				s.recycle()
-				tracePrintf(ctx, map[string]interface{}{"sessionID": s.getID()},
-					"Error preparing session for write")
 				return nil, toSpannerError(err)
 			}
 		}
@@ -900,7 +879,7 @@ func (hc *healthChecker) worker(i int) {
 			cancel()
 			if err != nil {
 				// Skip handling prepare error, session can be prepared in next cycle
-				log.Printf("Failed to prepare session, error: %v", toSpannerError(err))
+				log.Warningf("Failed to prepare session, error: %v", toSpannerError(err))
 			}
 			hc.pool.recycle(ws)
 			hc.pool.mu.Lock()
@@ -969,13 +948,13 @@ func (hc *healthChecker) maintainer() {
 				err error
 			)
 			if s, err = p.createSession(ctx); err != nil {
-				log.Printf("Failed to create session, error: %v", toSpannerError(err))
+				log.Warningf("Failed to create session, error: %v", toSpannerError(err))
 				continue
 			}
 			if shouldPrepareWrite {
 				if err = s.prepareForWrite(ctx); err != nil {
 					p.recycle(s)
-					log.Printf("Failed to prepare session, error: %v", toSpannerError(err))
+					log.Warningf("Failed to prepare session, error: %v", toSpannerError(err))
 					continue
 				}
 			}

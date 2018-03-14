@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/spf13/pflag"
 
@@ -37,7 +36,7 @@ import (
 )
 
 type EtcdOptions struct {
-	// The value of Paging on StorageConfig will be overridden by the
+	// The value of Paging on StorageConfig will be overriden by the
 	// calculated feature gate value.
 	StorageConfig                    storagebackend.Config
 	EncryptionProviderConfigFilepath string
@@ -65,7 +64,7 @@ var storageTypes = sets.NewString(
 )
 
 func NewEtcdOptions(backendConfig *storagebackend.Config) *EtcdOptions {
-	options := &EtcdOptions{
+	return &EtcdOptions{
 		StorageConfig:           *backendConfig,
 		DefaultStorageMediaType: "application/json",
 		DeleteCollectionWorkers: 1,
@@ -73,8 +72,6 @@ func NewEtcdOptions(backendConfig *storagebackend.Config) *EtcdOptions {
 		EnableWatchCache:        true,
 		DefaultWatchCacheSize:   100,
 	}
-	options.StorageConfig.CountMetricPollPeriod = time.Minute
-	return options
 }
 
 func (s *EtcdOptions) Validate() []error {
@@ -122,10 +119,8 @@ func (s *EtcdOptions) AddFlags(fs *pflag.FlagSet) {
 
 	fs.StringSliceVar(&s.WatchCacheSizes, "watch-cache-sizes", s.WatchCacheSizes, ""+
 		"List of watch cache sizes for every resource (pods, nodes, etc.), comma separated. "+
-		"The individual override format: resource[.group]#size, where resource is lowercase plural (no version), "+
-		"group is optional, and size is a number. It takes effect when watch-cache is enabled. "+
-		"Some resources (replicationcontrollers, endpoints, nodes, pods, services, apiservices.apiregistration.k8s.io) "+
-		"have system defaults set by heuristics, others default to default-watch-cache-size")
+		"The individual override format: resource#size, where size is a number. It takes effect "+
+		"when watch-cache is enabled.")
 
 	fs.StringVar(&s.StorageConfig.Type, "storage-backend", s.StorageConfig.Type,
 		"The storage backend for persistence. Options: 'etcd3' (default), 'etcd2'.")
@@ -149,17 +144,10 @@ func (s *EtcdOptions) AddFlags(fs *pflag.FlagSet) {
 		"SSL Certificate Authority file used to secure etcd communication.")
 
 	fs.BoolVar(&s.StorageConfig.Quorum, "etcd-quorum-read", s.StorageConfig.Quorum,
-		"If true, enable quorum read. It defaults to true and is strongly recommended not setting to false.")
-	fs.MarkDeprecated("etcd-quorum-read", "This flag is deprecated and the ability to switch off quorum read will be removed in a future release.")
+		"If true, enable quorum read.")
 
 	fs.StringVar(&s.EncryptionProviderConfigFilepath, "experimental-encryption-provider-config", s.EncryptionProviderConfigFilepath,
 		"The file containing configuration for encryption providers to be used for storing secrets in etcd")
-
-	fs.DurationVar(&s.StorageConfig.CompactionInterval, "etcd-compaction-interval", s.StorageConfig.CompactionInterval,
-		"The interval of compaction requests. If 0, the compaction request from apiserver is disabled.")
-
-	fs.DurationVar(&s.StorageConfig.CountMetricPollPeriod, "etcd-count-metric-poll-period", s.StorageConfig.CountMetricPollPeriod, ""+
-		"Frequency of polling etcd for number of resources per type. 0 disables the metric collection.")
 }
 
 func (s *EtcdOptions) ApplyTo(c *server.Config) error {
@@ -202,7 +190,6 @@ func (f *SimpleRestOptionsFactory) GetRESTOptions(resource schema.GroupResource)
 		EnableGarbageCollection: f.Options.EnableGarbageCollection,
 		DeleteCollectionWorkers: f.Options.DeleteCollectionWorkers,
 		ResourcePrefix:          resource.Group + "/" + resource.Resource,
-		CountMetricPollPeriod:   f.Options.StorageConfig.CountMetricPollPeriod,
 	}
 	if f.Options.EnableWatchCache {
 		sizes, err := ParseWatchCacheSizes(f.Options.WatchCacheSizes)
@@ -235,7 +222,6 @@ func (f *storageFactoryRestOptionsFactory) GetRESTOptions(resource schema.GroupR
 		DeleteCollectionWorkers: f.Options.DeleteCollectionWorkers,
 		EnableGarbageCollection: f.Options.EnableGarbageCollection,
 		ResourcePrefix:          f.StorageFactory.ResourcePrefix(resource),
-		CountMetricPollPeriod:   f.Options.StorageConfig.CountMetricPollPeriod,
 	}
 	if f.Options.EnableWatchCache {
 		sizes, err := ParseWatchCacheSizes(f.Options.WatchCacheSizes)

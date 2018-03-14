@@ -76,9 +76,6 @@ type TableMetadata struct {
 	// Information about a table stored outside of BigQuery.
 	ExternalDataConfig *ExternalDataConfig
 
-	// Custom encryption configuration (e.g., Cloud KMS keys).
-	EncryptionConfig *EncryptionConfig
-
 	// All the fields below are read-only.
 
 	FullID           string // An opaque ID uniquely identifying the table.
@@ -178,32 +175,6 @@ func bqToTimePartitioning(q *bq.TimePartitioning) *TimePartitioning {
 	}
 }
 
-// EncryptionConfig configures customer-managed encryption on tables.
-type EncryptionConfig struct {
-	// Describes the Cloud KMS encryption key that will be used to protect
-	// destination BigQuery table. The BigQuery Service Account associated with your
-	// project requires access to this encryption key.
-	KMSKeyName string
-}
-
-func (e *EncryptionConfig) toBQ() *bq.EncryptionConfiguration {
-	if e == nil {
-		return nil
-	}
-	return &bq.EncryptionConfiguration{
-		KmsKeyName: e.KMSKeyName,
-	}
-}
-
-func bqToEncryptionConfig(q *bq.EncryptionConfiguration) *EncryptionConfig {
-	if q == nil {
-		return nil
-	}
-	return &EncryptionConfig{
-		KMSKeyName: q.KmsKeyName,
-	}
-}
-
 // StreamingBuffer holds information about the streaming buffer.
 type StreamingBuffer struct {
 	// A lower-bound estimate of the number of bytes currently in the streaming
@@ -294,7 +265,6 @@ func (tm *TableMetadata) toBQ() (*bq.Table, error) {
 		edc := tm.ExternalDataConfig.toBQ()
 		t.ExternalDataConfiguration = &edc
 	}
-	t.EncryptionConfiguration = tm.EncryptionConfig.toBQ()
 	if tm.FullID != "" {
 		return nil, errors.New("cannot set FullID on create")
 	}
@@ -350,7 +320,6 @@ func bqToTableMetadata(t *bq.Table) (*TableMetadata, error) {
 		CreationTime:     unixMillisToTime(t.CreationTime),
 		LastModifiedTime: unixMillisToTime(int64(t.LastModifiedTime)),
 		ETag:             t.Etag,
-		EncryptionConfig: bqToEncryptionConfig(t.EncryptionConfiguration),
 	}
 	if t.Schema != nil {
 		md.Schema = bqToSchema(t.Schema)

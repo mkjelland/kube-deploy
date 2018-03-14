@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -30,7 +31,7 @@ import (
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
-var errConnKilled = fmt.Errorf("killing connection/stream because serving request timed out and response had been started")
+var errConnKilled = fmt.Errorf("kill connection/stream")
 
 // WithTimeoutForNonLongRunningRequests times out non-long-running requests after the time given by timeout.
 func WithTimeoutForNonLongRunningRequests(handler http.Handler, requestContextMapper apirequest.RequestContextMapper, longRunning apirequest.LongRunningRequestCheck, timeout time.Duration) http.Handler {
@@ -54,8 +55,20 @@ func WithTimeoutForNonLongRunningRequests(handler http.Handler, requestContextMa
 		if longRunning(req, requestInfo) {
 			return nil, nil, nil
 		}
+		now := time.Now()
 		metricFn := func() {
-			metrics.Record(req, requestInfo, "", http.StatusGatewayTimeout, 0, 0)
+			scope := "cluster"
+			if requestInfo.Namespace != "" {
+				scope = "namespace"
+			}
+			if requestInfo.Name != "" {
+				scope = "resource"
+			}
+			if requestInfo.IsResourceRequest {
+				metrics.MonitorRequest(req, strings.ToUpper(requestInfo.Verb), requestInfo.Resource, requestInfo.Subresource, "", scope, http.StatusGatewayTimeout, 0, now)
+			} else {
+				metrics.MonitorRequest(req, strings.ToUpper(requestInfo.Verb), "", requestInfo.Path, "", scope, http.StatusGatewayTimeout, 0, now)
+			}
 		}
 		return time.After(timeout), metricFn, apierrors.NewTimeoutError(fmt.Sprintf("request did not complete within %s", timeout), 0)
 	}
@@ -129,7 +142,7 @@ type baseTimeoutWriter struct {
 	w http.ResponseWriter
 
 	mu sync.Mutex
-	// if the timeout handler has timeout
+	// if the timeout handler has timedout
 	timedOut bool
 	// if this timeout writer has wrote header
 	wroteHeader bool

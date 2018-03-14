@@ -42,9 +42,6 @@ type AcceptanceTestChoices struct {
 
 	// DBDatastoreTypeID is the datastore type version for DB tests.
 	DBDatastoreVersion string
-
-	// LiveMigrate indicates ability to run multi-node migration tests
-	LiveMigrate bool
 }
 
 // AcceptanceTestChoicesFromEnv populates a ComputeChoices struct from environment variables.
@@ -59,11 +56,6 @@ func AcceptanceTestChoicesFromEnv() (*AcceptanceTestChoices, error) {
 	shareNetworkID := os.Getenv("OS_SHARE_NETWORK_ID")
 	dbDatastoreType := os.Getenv("OS_DB_DATASTORE_TYPE")
 	dbDatastoreVersion := os.Getenv("OS_DB_DATASTORE_VERSION")
-
-	var liveMigrate bool
-	if v := os.Getenv("OS_LIVE_MIGRATE"); v != "" {
-		liveMigrate = true
-	}
 
 	missing := make([]string, 0, 3)
 	if imageID == "" {
@@ -114,7 +106,6 @@ func AcceptanceTestChoicesFromEnv() (*AcceptanceTestChoices, error) {
 		ShareNetworkID:     shareNetworkID,
 		DBDatastoreType:    dbDatastoreType,
 		DBDatastoreVersion: dbDatastoreVersion,
-		LiveMigrate:        liveMigrate,
 	}, nil
 }
 

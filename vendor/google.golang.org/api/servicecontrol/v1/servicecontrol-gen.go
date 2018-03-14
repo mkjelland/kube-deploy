@@ -420,9 +420,8 @@ type CheckError struct {
 	//
 	// Possible values:
 	//   "ERROR_CODE_UNSPECIFIED" - This is never used in `CheckResponse`.
-	//   "NOT_FOUND" - The consumer's project id, network container, or
-	// resource container was
-	// not found. Same as google.rpc.Code.NOT_FOUND.
+	//   "NOT_FOUND" - The consumer's project id was not found.
+	// Same as google.rpc.Code.NOT_FOUND.
 	//   "PERMISSION_DENIED" - The consumer doesn't have access to the
 	// specified resource.
 	// Same as google.rpc.Code.PERMISSION_DENIED.
@@ -1365,9 +1364,7 @@ type Operation struct {
 	//        used to handle the API request (e.g. ESP),
 	//     - `servicecontrol.googleapis.com/platform` describing the
 	// platform
-	//        where the API is served, such as App Engine, Compute Engine,
-	// or
-	//        Kubernetes Engine.
+	//        where the API is served (e.g. GAE, GCE, GKE).
 	Labels map[string]string `json:"labels,omitempty"`
 
 	// LogEntries: Represents information to be logged.
@@ -2531,29 +2528,24 @@ type ServicesCheckCall struct {
 	header_      http.Header
 }
 
-// Check: Checks whether an operation on a service should be allowed to
-// proceed
-// based on the configuration of the service and related policies. It
-// must be
-// called before the operation is executed.
+// Check: Checks an operation with Google Service Control to decide
+// whether
+// the given operation should proceed. It should be called before
+// the
+// operation is executed.
 //
 // If feasible, the client should cache the check results and reuse them
 // for
-// 60 seconds. In case of any server errors, the client should rely on
-// the
-// cached results for much longer time to avoid outage.
-// WARNING: There is general 60s delay for the configuration and
-// policy
-// propagation, therefore callers MUST NOT depend on the `Check` method
-// having
-// the latest policy information.
+// 60 seconds. In case of server errors, the client can rely on the
+// cached
+// results for longer time.
 //
 // NOTE: the CheckRequest has the size limit of 64KB.
 //
 // This method requires the `servicemanagement.services.check`
 // permission
 // on the specified service. For more information, see
-// [Cloud IAM](https://cloud.google.com/iam).
+// [Google Cloud IAM](https://cloud.google.com/iam).
 func (r *ServicesService) Check(serviceName string, checkrequest *CheckRequest) *ServicesCheckCall {
 	c := &ServicesCheckCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.serviceName = serviceName
@@ -2647,7 +2639,7 @@ func (c *ServicesCheckCall) Do(opts ...googleapi.CallOption) (*CheckResponse, er
 	}
 	return ret, nil
 	// {
-	//   "description": "Checks whether an operation on a service should be allowed to proceed\nbased on the configuration of the service and related policies. It must be\ncalled before the operation is executed.\n\nIf feasible, the client should cache the check results and reuse them for\n60 seconds. In case of any server errors, the client should rely on the\ncached results for much longer time to avoid outage.\nWARNING: There is general 60s delay for the configuration and policy\npropagation, therefore callers MUST NOT depend on the `Check` method having\nthe latest policy information.\n\nNOTE: the CheckRequest has the size limit of 64KB.\n\nThis method requires the `servicemanagement.services.check` permission\non the specified service. For more information, see\n[Cloud IAM](https://cloud.google.com/iam).",
+	//   "description": "Checks an operation with Google Service Control to decide whether\nthe given operation should proceed. It should be called before the\noperation is executed.\n\nIf feasible, the client should cache the check results and reuse them for\n60 seconds. In case of server errors, the client can rely on the cached\nresults for longer time.\n\nNOTE: the CheckRequest has the size limit of 64KB.\n\nThis method requires the `servicemanagement.services.check` permission\non the specified service. For more information, see\n[Google Cloud IAM](https://cloud.google.com/iam).",
 	//   "flatPath": "v1/services/{serviceName}:check",
 	//   "httpMethod": "POST",
 	//   "id": "servicecontrol.services.check",

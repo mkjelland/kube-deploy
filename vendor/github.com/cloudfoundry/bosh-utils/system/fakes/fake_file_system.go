@@ -59,14 +59,11 @@ type FakeFileSystem struct {
 
 	MkdirAllError       error
 	mkdirAllErrorByPath map[string]error
-	MkdirAllCallCount   int
 
 	ChangeTempRootErr error
 
-	ChownErr       error
-	ChownCallCount int
-	ChmodErr       error
-	ChmodCallCount int
+	ChownErr error
+	ChmodErr error
 
 	CopyFileError     error
 	CopyFileCallCount int
@@ -273,7 +270,6 @@ func (fs *FakeFileSystem) RegisterMkdirAllError(path string, err error) {
 }
 
 func (fs *FakeFileSystem) MkdirAll(path string, perm os.FileMode) error {
-	fs.MkdirAllCallCount++
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 
@@ -401,7 +397,6 @@ func (fs *FakeFileSystem) Lstat(path string) (os.FileInfo, error) {
 }
 
 func (fs *FakeFileSystem) Chown(path, username string) error {
-	fs.ChownCallCount++
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 
@@ -425,7 +420,6 @@ func (fs *FakeFileSystem) Chown(path, username string) error {
 }
 
 func (fs *FakeFileSystem) Chmod(path string, perm os.FileMode) error {
-	fs.ChmodCallCount++
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 
@@ -609,8 +603,6 @@ func (fs *FakeFileSystem) Rename(oldPath, newPath string) error {
 	newStats.Content = stats.Content
 	newStats.FileMode = stats.FileMode
 	newStats.FileType = stats.FileType
-	newStats.Username = stats.Username
-	newStats.Groupname = stats.Groupname
 	newStats.Flags = stats.Flags
 
 	// Ignore error from RemoveAll

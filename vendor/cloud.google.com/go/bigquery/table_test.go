@@ -53,7 +53,6 @@ func TestBQToTableMetadata(t *testing.T) {
 					Type:         "DAY",
 					Field:        "pfield",
 				},
-				EncryptionConfiguration: &bq.EncryptionConfiguration{KmsKeyName: "keyName"},
 				Type:   "EXTERNAL",
 				View:   &bq.ViewDefinition{Query: "view-query"},
 				Labels: map[string]string{"a": "b"},
@@ -83,8 +82,7 @@ func TestBQToTableMetadata(t *testing.T) {
 					EstimatedRows:   3,
 					OldestEntryTime: aTime,
 				},
-				EncryptionConfig: &EncryptionConfig{KMSKeyName: "keyName"},
-				ETag:             "etag",
+				ETag: "etag",
 			},
 		},
 	} {
@@ -117,7 +115,6 @@ func TestTableMetadataToBQ(t *testing.T) {
 				ExpirationTime:     aTime,
 				Labels:             map[string]string{"a": "b"},
 				ExternalDataConfig: &ExternalDataConfig{SourceFormat: Bigtable},
-				EncryptionConfig:   &EncryptionConfig{KMSKeyName: "keyName"},
 			},
 			&bq.Table{
 				FriendlyName: "n",
@@ -130,7 +127,6 @@ func TestTableMetadataToBQ(t *testing.T) {
 				ExpirationTime: aTimeMillis,
 				Labels:         map[string]string{"a": "b"},
 				ExternalDataConfiguration: &bq.ExternalDataConfiguration{SourceFormat: "BIGTABLE"},
-				EncryptionConfiguration:   &bq.EncryptionConfiguration{KmsKeyName: "keyName"},
 			},
 		},
 		{

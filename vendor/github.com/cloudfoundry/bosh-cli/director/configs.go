@@ -8,7 +8,6 @@ import (
 	gourl "net/url"
 
 	bosherr "github.com/cloudfoundry/bosh-utils/errors"
-	"strconv"
 )
 
 type Config struct {
@@ -16,15 +15,13 @@ type Config struct {
 }
 
 type ConfigListItem struct {
-	Id   string
 	Name string
 	Type string
 }
 
 type ConfigsFilter struct {
-	Type            string
-	Name            string
-	IncludeOutdated bool
+	Type string
+	Name string
 }
 
 type UpdateConfigBody struct {
@@ -84,7 +81,7 @@ func (c Client) listConfigs(filter ConfigsFilter) ([]ConfigListItem, error) {
 	var resps []ConfigListItem
 
 	query := gourl.Values{}
-	query.Add("latest", strconv.FormatBool(!filter.IncludeOutdated))
+	query.Add("latest", "true")
 	if filter.Type != "" {
 		query.Add("type", filter.Type)
 	}

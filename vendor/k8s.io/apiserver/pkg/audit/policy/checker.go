@@ -36,24 +36,7 @@ type Checker interface {
 
 // NewChecker creates a new policy checker.
 func NewChecker(policy *audit.Policy) Checker {
-	for i, rule := range policy.Rules {
-		policy.Rules[i].OmitStages = unionStages(policy.OmitStages, rule.OmitStages)
-	}
 	return &policyChecker{*policy}
-}
-
-func unionStages(stageLists ...[]audit.Stage) []audit.Stage {
-	m := make(map[audit.Stage]bool)
-	for _, sl := range stageLists {
-		for _, s := range sl {
-			m[s] = true
-		}
-	}
-	result := make([]audit.Stage, 0, len(m))
-	for key := range m {
-		result = append(result, key)
-	}
-	return result
 }
 
 // FakeChecker creates a checker that returns a constant level for all requests (for testing).
@@ -71,23 +54,19 @@ func (p *policyChecker) LevelAndStages(attrs authorizer.Attributes) (audit.Level
 			return rule.Level, rule.OmitStages
 		}
 	}
-	return DefaultAuditLevel, p.OmitStages
+	return DefaultAuditLevel, nil
 }
 
 // Check whether the rule matches the request attrs.
 func ruleMatches(r *audit.PolicyRule, attrs authorizer.Attributes) bool {
-	user := attrs.GetUser()
-	if len(r.Users) > 0 {
-		if user == nil || !hasString(r.Users, user.GetName()) {
+	if len(r.Users) > 0 && attrs.GetUser() != nil {
+		if !hasString(r.Users, attrs.GetUser().GetName()) {
 			return false
 		}
 	}
-	if len(r.UserGroups) > 0 {
-		if user == nil {
-			return false
-		}
+	if len(r.UserGroups) > 0 && attrs.GetUser() != nil {
 		matched := false
-		for _, group := range user.GetGroups() {
+		for _, group := range attrs.GetUser().GetGroups() {
 			if hasString(r.UserGroups, group) {
 				matched = true
 				break
@@ -164,11 +143,11 @@ func ruleMatchesResource(r *audit.PolicyRule, attrs authorizer.Attributes) bool 
 
 	apiGroup := attrs.GetAPIGroup()
 	resource := attrs.GetResource()
-	subresource := attrs.GetSubresource()
-	combinedResource := resource
 	// If subresource, the resource in the policy must match "(resource)/(subresource)"
-	if subresource != "" {
-		combinedResource = resource + "/" + subresource
+	//
+	// TODO: consider adding options like "pods/*" to match all subresources.
+	if sr := attrs.GetSubresource(); sr != "" {
+		resource = resource + "/" + sr
 	}
 
 	name := attrs.GetName()
@@ -179,17 +158,8 @@ func ruleMatchesResource(r *audit.PolicyRule, attrs authorizer.Attributes) bool 
 				return true
 			}
 			for _, res := range gr.Resources {
-				if len(gr.ResourceNames) == 0 || hasString(gr.ResourceNames, name) {
-					// match "*"
-					if res == combinedResource || res == "*" {
-						return true
-					}
-					// match "*/subresource"
-					if len(subresource) > 0 && strings.HasPrefix(res, "*/") && subresource == strings.TrimLeft(res, "*/") {
-						return true
-					}
-					// match "resource/*"
-					if strings.HasSuffix(res, "/*") && resource == strings.TrimRight(res, "/*") {
+				if res == resource {
+					if len(gr.ResourceNames) == 0 || hasString(gr.ResourceNames, name) {
 						return true
 					}
 				}

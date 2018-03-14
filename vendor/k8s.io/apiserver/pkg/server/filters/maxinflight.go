@@ -19,28 +19,21 @@ package filters
 import (
 	"fmt"
 	"net/http"
-	"sync"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/metrics"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/golang/glog"
 )
 
-const (
-	// Constant for the retry-after interval on rate limiting.
-	// TODO: maybe make this dynamic? or user-adjustable?
-	retryAfter = "1"
-
-	// How often inflight usage metric should be updated. Because
-	// the metrics tracks maximal value over period making this
-	// longer will increase the metric value.
-	inflightUsageMetricUpdatePeriod = time.Second
-)
+// Constant for the retry-after interval on rate limiting.
+// TODO: maybe make this dynamic? or user-adjustable?
+const retryAfter = "1"
 
 var nonMutatingRequestVerbs = sets.NewString("get", "list", "watch")
 
@@ -50,58 +43,14 @@ func handleError(w http.ResponseWriter, r *http.Request, err error) {
 	glog.Errorf(err.Error())
 }
 
-// requestWatermark is used to trak maximal usage of inflight requests.
-type requestWatermark struct {
-	lock                                 sync.Mutex
-	readOnlyWatermark, mutatingWatermark int
-}
-
-func (w *requestWatermark) recordMutating(mutatingVal int) {
-	w.lock.Lock()
-	defer w.lock.Unlock()
-
-	if w.mutatingWatermark < mutatingVal {
-		w.mutatingWatermark = mutatingVal
-	}
-}
-
-func (w *requestWatermark) recordReadOnly(readOnlyVal int) {
-	w.lock.Lock()
-	defer w.lock.Unlock()
-
-	if w.readOnlyWatermark < readOnlyVal {
-		w.readOnlyWatermark = readOnlyVal
-	}
-}
-
-var watermark = &requestWatermark{}
-
-func startRecordingUsage() {
-	go func() {
-		wait.Forever(func() {
-			watermark.lock.Lock()
-			readOnlyWatermark := watermark.readOnlyWatermark
-			mutatingWatermark := watermark.mutatingWatermark
-			watermark.readOnlyWatermark = 0
-			watermark.mutatingWatermark = 0
-			watermark.lock.Unlock()
-
-			metrics.UpdateInflightRequestMetrics(readOnlyWatermark, mutatingWatermark)
-		}, inflightUsageMetricUpdatePeriod)
-	}()
-}
-
-var startOnce sync.Once
-
 // WithMaxInFlightLimit limits the number of in-flight requests to buffer size of the passed in channel.
 func WithMaxInFlightLimit(
 	handler http.Handler,
 	nonMutatingLimit int,
 	mutatingLimit int,
-	requestContextMapper apirequest.RequestContextMapper,
+	requestContextMapper genericapirequest.RequestContextMapper,
 	longRunningRequestCheck apirequest.LongRunningRequestCheck,
 ) http.Handler {
-	startOnce.Do(startRecordingUsage)
 	if nonMutatingLimit == 0 && mutatingLimit == 0 {
 		return handler
 	}
@@ -133,8 +82,7 @@ func WithMaxInFlightLimit(
 		}
 
 		var c chan bool
-		isMutatingRequest := !nonMutatingRequestVerbs.Has(requestInfo.Verb)
-		if isMutatingRequest {
+		if !nonMutatingRequestVerbs.Has(requestInfo.Verb) {
 			c = mutatingChan
 		} else {
 			c = nonMutatingChan
@@ -146,31 +94,10 @@ func WithMaxInFlightLimit(
 
 			select {
 			case c <- true:
-				var mutatingLen, readOnlyLen int
-				if isMutatingRequest {
-					mutatingLen = len(mutatingChan)
-				} else {
-					readOnlyLen = len(nonMutatingChan)
-				}
-
-				defer func() {
-					<-c
-					if isMutatingRequest {
-						watermark.recordMutating(mutatingLen)
-					} else {
-						watermark.recordReadOnly(readOnlyLen)
-					}
-
-				}()
+				defer func() { <-c }()
 				handler.ServeHTTP(w, r)
 
 			default:
-				// We need to split this data between buckets used for throttling.
-				if isMutatingRequest {
-					metrics.DroppedRequests.WithLabelValues(metrics.MutatingKind).Inc()
-				} else {
-					metrics.DroppedRequests.WithLabelValues(metrics.ReadOnlyKind).Inc()
-				}
 				// at this point we're about to return a 429, BUT not all actors should be rate limited.  A system:master is so powerful
 				// that he should always get an answer.  It's a super-admin or a loopback connection.
 				if currUser, ok := apirequest.UserFrom(ctx); ok {
@@ -181,7 +108,18 @@ func WithMaxInFlightLimit(
 						}
 					}
 				}
-				metrics.Record(r, requestInfo, "", http.StatusTooManyRequests, 0, 0)
+				scope := "cluster"
+				if requestInfo.Namespace != "" {
+					scope = "namespace"
+				}
+				if requestInfo.Name != "" {
+					scope = "resource"
+				}
+				if requestInfo.IsResourceRequest {
+					metrics.MonitorRequest(r, strings.ToUpper(requestInfo.Verb), requestInfo.Resource, requestInfo.Subresource, "", scope, http.StatusTooManyRequests, 0, time.Now())
+				} else {
+					metrics.MonitorRequest(r, strings.ToUpper(requestInfo.Verb), "", requestInfo.Path, "", scope, http.StatusTooManyRequests, 0, time.Now())
+				}
 				tooManyRequests(r, w)
 			}
 		}

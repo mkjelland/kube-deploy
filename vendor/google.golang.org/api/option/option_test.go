@@ -15,11 +15,9 @@
 package option
 
 import (
+	"reflect"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/internal"
 	"google.golang.org/grpc"
 )
@@ -48,7 +46,6 @@ func TestApply(t *testing.T) {
 		WithGRPCConn(conn),
 		WithUserAgent("ua"),
 		WithCredentialsFile("service-account.json"),
-		WithCredentials(&google.DefaultCredentials{ProjectID: "p"}),
 		WithAPIKey("api-key"),
 	}
 	var got internal.DialSettings
@@ -60,11 +57,10 @@ func TestApply(t *testing.T) {
 		UserAgent:       "ua",
 		Endpoint:        "https://example.com:443",
 		GRPCConn:        conn,
-		Credentials:     &google.DefaultCredentials{ProjectID: "p"},
 		CredentialsFile: "service-account.json",
 		APIKey:          "api-key",
 	}
-	if !cmp.Equal(got, want, cmpopts.IgnoreUnexported(grpc.ClientConn{})) {
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("\ngot  %#v\nwant %#v", got, want)
 	}
 }

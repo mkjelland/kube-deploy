@@ -545,12 +545,12 @@ func (s *CustomerListConfigurationsResponse) MarshalJSON() ([]byte, error) {
 // CustomerListCustomersResponse: Response message for listing my
 // customers.
 type CustomerListCustomersResponse struct {
-	// Customers: The customer accounts the calling user is a member of.
+	// Customers: Customers the current user can act as.
 	Customers []*Company `json:"customers,omitempty"`
 
-	// NextPageToken: A token used to access the next page of results.
-	// Omitted if no further
-	// results are available.
+	// NextPageToken: Token to retrieve the next page of results, or empty
+	// if there are no
+	// more results in the list.
 	NextPageToken string `json:"nextPageToken,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1786,22 +1786,21 @@ type CustomersListCall struct {
 	header_      http.Header
 }
 
-// List: Lists the user's customer accounts.
+// List: List the user's customer accounts.
 func (r *CustomersService) List() *CustomersListCall {
 	c := &CustomersListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	return c
 }
 
 // PageSize sets the optional parameter "pageSize": The maximum number
-// of customers to show in a page of results.
-// A number between 1 and 100 (inclusive).
+// of items to return.
 func (c *CustomersListCall) PageSize(pageSize int64) *CustomersListCall {
 	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
 	return c
 }
 
-// PageToken sets the optional parameter "pageToken": A token specifying
-// which result page to return.
+// PageToken sets the optional parameter "pageToken": The
+// next_page_token value returned from a previous List request, if any.
 func (c *CustomersListCall) PageToken(pageToken string) *CustomersListCall {
 	c.urlParams_.Set("pageToken", pageToken)
 	return c
@@ -1898,20 +1897,20 @@ func (c *CustomersListCall) Do(opts ...googleapi.CallOption) (*CustomerListCusto
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists the user's customer accounts.",
+	//   "description": "List the user's customer accounts.",
 	//   "flatPath": "v1/customers",
 	//   "httpMethod": "GET",
 	//   "id": "androiddeviceprovisioning.customers.list",
 	//   "parameterOrder": [],
 	//   "parameters": {
 	//     "pageSize": {
-	//       "description": "The maximum number of customers to show in a page of results.\nA number between 1 and 100 (inclusive).",
+	//       "description": "The maximum number of items to return.",
 	//       "format": "int32",
 	//       "location": "query",
 	//       "type": "integer"
 	//     },
 	//     "pageToken": {
-	//       "description": "A token specifying which result page to return.",
+	//       "description": "The next_page_token value returned from a previous List request, if any.",
 	//       "location": "query",
 	//       "type": "string"
 	//     }
@@ -2917,8 +2916,8 @@ func (r *CustomersDevicesService) List(parent string) *CustomersDevicesListCall 
 }
 
 // PageSize sets the optional parameter "pageSize": The maximum number
-// of devices to show in a page of results.
-// Must be between 1 and 100 inclusive.
+// of devices to show in a page of results. The default
+// value returns all the devices in a single page.
 func (c *CustomersDevicesListCall) PageSize(pageSize int64) *CustomersDevicesListCall {
 	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
 	return c
@@ -3034,7 +3033,7 @@ func (c *CustomersDevicesListCall) Do(opts ...googleapi.CallOption) (*CustomerLi
 	//   ],
 	//   "parameters": {
 	//     "pageSize": {
-	//       "description": "The maximum number of devices to show in a page of results.\nMust be between 1 and 100 inclusive.",
+	//       "description": "The maximum number of devices to show in a page of results. The default\nvalue returns all the devices in a single page.",
 	//       "format": "int64",
 	//       "location": "query",
 	//       "type": "string"
