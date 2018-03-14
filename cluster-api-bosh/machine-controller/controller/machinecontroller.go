@@ -21,7 +21,6 @@ import (
 	"errors"
 
 	"github.com/golang/glog"
-	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +30,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud"
+	boshcreateenv "k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh-create-env"
 	"k8s.io/kube-deploy/cluster-api-bosh/util"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
@@ -97,14 +97,13 @@ func NewMachineController(config *Configuration) *MachineController {
 		glog.Fatalf("error creating machine actuator: %v", err)
 	}
 
-	nodeWatcher, err := NewNodeWatcher(config.Kubeconfig, bosh.NewNameResolver(dep))
+	nodeWatcher, err := NewNodeWatcher(config.Kubeconfig, boshcreateenv.NewNameResolver(nil))
 	if err != nil {
 		glog.Fatalf("error creating node watcher: %v", err)
 	}
 
 	return &MachineController{
 		config:        config,
-		director:      director,
 		restClient:    restClient,
 		kubeClientSet: kubeClientSet,
 		clusterClient: clusterClient,

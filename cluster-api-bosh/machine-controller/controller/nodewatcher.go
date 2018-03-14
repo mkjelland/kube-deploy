@@ -49,7 +49,7 @@ type NodeWatcher struct {
 }
 
 type InstanceResolver interface {
-	Get(cid string) (string, error)
+	Get(node *corev1.Node, machineClient clusterapiclient.MachinesInterface) (string, error)
 }
 
 func NewNodeWatcher(kubeconfig string, nameResolver InstanceResolver) (*NodeWatcher, error) {
@@ -118,9 +118,9 @@ func (c *NodeWatcher) link(node *corev1.Node) {
 		return
 	}
 
-	val, err := c.nameResolver.Get(node.ObjectMeta.Name)
+	val, err := c.nameResolver.Get(node, c.machineClient)
 	if err != nil {
-		glog.Errorf("Error resolving instance name: %v", err)
+		glog.Errorf("name resolver error %v", err)
 	}
 
 	machine, err := c.machineClient.Get(val, metav1.GetOptions{})

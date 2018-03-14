@@ -12,6 +12,8 @@ var masterInstanceGroups map[string]patch.Ops
 
 func init() {
 	{ // 1.9.2
+		workerInstanceGroups = map[string]patch.Ops{}
+		masterInstanceGroups = map[string]patch.Ops{}
 		var unmarshal []patch.OpDefinition
 
 		err := yaml.Unmarshal([]byte(kubo_worker_1_9_2), &unmarshal)
