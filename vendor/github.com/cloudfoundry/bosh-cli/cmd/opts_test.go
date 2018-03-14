@@ -22,6 +22,11 @@ func getStructTagForName(field string, opts interface{}) string {
 	return dupSpaces.ReplaceAllString(string(st.Tag), " ")
 }
 
+func getStructTagForType(field string, opts interface{}) string {
+	st, _ := reflect.TypeOf(opts).Elem().FieldByName(field)
+	return dupSpaces.ReplaceAllString(string(st.Tag), " ")
+}
+
 var _ = Describe("Opts", func() {
 	Describe("BoshOpts", func() {
 		var opts *BoshOpts
@@ -302,7 +307,7 @@ var _ = Describe("Opts", func() {
 		Describe("Config", func() {
 			It("contains desired values", func() {
 				Expect(getStructTagForName("Config", opts)).To(Equal(
-					`command:"config" alias:"c" description:"Show current config"`,
+					`command:"config" alias:"c" description:"Show current config for either ID or both type and name"`,
 				))
 			})
 		})
@@ -311,6 +316,14 @@ var _ = Describe("Opts", func() {
 			It("contains desired values", func() {
 				Expect(getStructTagForName("Configs", opts)).To(Equal(
 					`command:"configs" alias:"cs" description:"List configs"`,
+				))
+			})
+		})
+
+		Describe("DiffConfig", func() {
+			It("contains desired values", func() {
+				Expect(getStructTagForName("DiffConfigByID", opts)).To(Equal(
+					`command:"diff-config" description:"Diff two configs by ID"`,
 				))
 			})
 		})
@@ -898,6 +911,14 @@ var _ = Describe("Opts", func() {
 				Expect(getStructTagForName("Type", opts)).To(Equal(`long:"type" description:"Config type" optional:"true"`))
 			})
 		})
+
+		Describe("Recent", func() {
+			It("contains desired values", func() {
+				Expect(getStructTagForName("Recent", opts)).To(Equal(
+					`long:"recent" short:"r" description:"Number of configs to show" optional:"true" optional-value:"1" default:"1"`,
+				))
+			})
+		})
 	})
 
 	Describe("ConfigOpts", func() {
@@ -909,13 +930,19 @@ var _ = Describe("Opts", func() {
 
 		Describe("Args", func() {
 			It("contains desired values", func() {
-				Expect(getStructTagForName("Args", opts)).To(Equal(`positional-args:"true" required:"true"`))
+				Expect(getStructTagForName("Args", opts)).To(Equal(`positional-args:"true"`))
 			})
 		})
 
 		Describe("Name", func() {
 			It("contains desired values", func() {
-				Expect(getStructTagForName("Name", opts)).To(Equal(`long:"name" description:"Config name" default:"default"`))
+				Expect(getStructTagForName("Name", opts)).To(Equal(`long:"name" description:"Config name"`))
+			})
+		})
+
+		Describe("Type", func() {
+			It("contains desired values", func() {
+				Expect(getStructTagForType("Type", opts)).To(Equal(`long:"type" description:"Config type"`))
 			})
 		})
 	})
@@ -929,8 +956,46 @@ var _ = Describe("Opts", func() {
 
 		Describe("Type", func() {
 			It("contains desired values", func() {
-				Expect(getStructTagForName("Type", opts)).To(Equal(
-					`positional-arg-name:"TYPE" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`,
+				Expect(getStructTagForName("ID", opts)).To(Equal(
+					`positional-arg-name:"ID" description:"Config ID"`,
+				))
+			})
+		})
+	})
+
+	Describe("DiffConfigOpts", func() {
+		var opts *DiffConfigOpts
+
+		BeforeEach(func() {
+			opts = &DiffConfigOpts{}
+		})
+
+		Describe("Args", func() {
+			It("contains desired values", func() {
+				Expect(getStructTagForName("Args", opts)).To(Equal(`positional-args:"true" required:"true"`))
+			})
+		})
+	})
+
+	Describe("DiffConfigArgs", func() {
+		var opts *DiffConfigArgs
+
+		BeforeEach(func() {
+			opts = &DiffConfigArgs{}
+		})
+
+		Describe("FromID", func() {
+			It("contains desired values", func() {
+				Expect(getStructTagForName("FromID", opts)).To(Equal(
+					`positional-arg-name:"FROM" description:"ID of first config to compare"`,
+				))
+			})
+		})
+
+		Describe("ToID", func() {
+			It("contains desired values", func() {
+				Expect(getStructTagForName("ToID", opts)).To(Equal(
+					`positional-arg-name:"TO" description:"ID of second config to compare"`,
 				))
 			})
 		})
@@ -951,7 +1016,8 @@ var _ = Describe("Opts", func() {
 
 		Describe("Name", func() {
 			It("contains desired values", func() {
-				Expect(getStructTagForName("Name", opts)).To(Equal(`long:"name" description:"Config name" default:"default"`))
+				Expect(getStructTagForName("Type", opts)).To(Equal(`long:"type" required:"true" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`))
+				Expect(getStructTagForName("Name", opts)).To(Equal(`long:"name" required:"true" description:"Config name"`))
 			})
 		})
 	})
@@ -965,7 +1031,6 @@ var _ = Describe("Opts", func() {
 
 		Describe("Type", func() {
 			It("contains desired values", func() {
-				Expect(getStructTagForName("Type", opts)).To(Equal(`positional-arg-name:"TYPE" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`))
 				Expect(getStructTagForName("Config", opts)).To(Equal(`positional-arg-name:"PATH" description:"Path to a YAML config file"`))
 			})
 		})
@@ -980,13 +1045,19 @@ var _ = Describe("Opts", func() {
 
 		Describe("Args", func() {
 			It("contains desired values", func() {
-				Expect(getStructTagForName("Args", opts)).To(Equal(`positional-args:"true" required:"true"`))
+				Expect(getStructTagForName("Args", opts)).To(Equal(`positional-args:"true"`))
+			})
+		})
+
+		Describe("Type", func() {
+			It("contains desired values", func() {
+				Expect(getStructTagForName("Type", opts)).To(Equal(`long:"type" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`))
 			})
 		})
 
 		Describe("Name", func() {
 			It("contains desired values", func() {
-				Expect(getStructTagForName("Name", opts)).To(Equal(`long:"name" description:"Config name" default:"default"`))
+				Expect(getStructTagForName("Name", opts)).To(Equal(`long:"name" description:"Config name"`))
 			})
 		})
 	})
@@ -998,9 +1069,11 @@ var _ = Describe("Opts", func() {
 			opts = &DeleteConfigArgs{}
 		})
 
-		Describe("Type", func() {
+		Describe("ID", func() {
 			It("contains desired values", func() {
-				Expect(getStructTagForName("Type", opts)).To(Equal(`positional-arg-name:"TYPE" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`))
+				Expect(getStructTagForName("ID", opts)).To(Equal(
+					`positional-arg-name:"ID" description:"Config ID"`,
+				))
 			})
 		})
 	})
@@ -2088,6 +2161,14 @@ var _ = Describe("Opts", func() {
 			It("contains desired values", func() {
 				Expect(getStructTagForName("Vitals", opts)).To(Equal(
 					`long:"vitals" description:"Show vitals"`,
+				))
+			})
+		})
+
+		Describe("CloudProperties", func() {
+			It("contains desired values", func() {
+				Expect(getStructTagForName("CloudProperties", opts)).To(Equal(
+					`long:"cloud-properties" description:"Show cloud properties"`,
 				))
 			})
 		})

@@ -21,24 +21,31 @@ func (c ConfigsCmd) Run(opts ConfigsOpts) error {
 		Name: opts.Name,
 	}
 
-	configs, err := c.director.ListConfigs(filter)
+	configs, err := c.director.ListConfigs(opts.Recent, filter)
 	if err != nil {
 		return err
 	}
 
+	var headers []boshtbl.Header
+	headers = append(headers, boshtbl.NewHeader("ID"))
+	headers = append(headers, boshtbl.NewHeader("Type"))
+	headers = append(headers, boshtbl.NewHeader("Name"))
+	headers = append(headers, boshtbl.NewHeader("Team"))
+	headers = append(headers, boshtbl.NewHeader("Created At"))
+
 	table := boshtbl.Table{
 		Content: "configs",
-		Header: []boshtbl.Header{
-			boshtbl.NewHeader("Type"),
-			boshtbl.NewHeader("Name"),
-		},
+		Header:  headers,
 	}
 
 	for _, config := range configs {
-		table.Rows = append(table.Rows, []boshtbl.Value{
-			boshtbl.NewValueString(config.Type),
-			boshtbl.NewValueString(config.Name),
-		})
+		var result []boshtbl.Value
+		result = append(result, boshtbl.NewValueString(config.ID))
+		result = append(result, boshtbl.NewValueString(config.Type))
+		result = append(result, boshtbl.NewValueString(config.Name))
+		result = append(result, boshtbl.NewValueString(config.Team))
+		result = append(result, boshtbl.NewValueString(config.CreatedAt))
+		table.Rows = append(table.Rows, result)
 	}
 
 	c.ui.PrintTable(table)

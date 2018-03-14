@@ -61,10 +61,11 @@ type BoshOpts struct {
 	CleanUp CleanUpOpts `command:"clean-up" description:"Clean up releases, stemcells, disks, etc."`
 
 	// Config
-	Config       ConfigOpts       `command:"config" alias:"c" description:"Show current config"`
-	Configs      ConfigsOpts      `command:"configs" alias:"cs" description:"List configs"`
-	UpdateConfig UpdateConfigOpts `command:"update-config" alias:"uc" description:"Update config"`
-	DeleteConfig DeleteConfigOpts `command:"delete-config" alias:"dc" description:"Delete config"`
+	Config         ConfigOpts       `command:"config" alias:"c" description:"Show current config for either ID or both type and name"`
+	Configs        ConfigsOpts      `command:"configs" alias:"cs" description:"List configs"`
+	UpdateConfig   UpdateConfigOpts `command:"update-config" alias:"uc" description:"Update config"`
+	DeleteConfig   DeleteConfigOpts `command:"delete-config" alias:"dc" description:"Delete config"`
+	DiffConfigByID DiffConfigOpts   `command:"diff-config" description:"Diff two configs by ID"`
 
 	// Cloud config
 	CloudConfig       CloudConfigOpts       `command:"cloud-config"        alias:"cc"  description:"Show current cloud config"`
@@ -299,45 +300,59 @@ type InterpolateArgs struct {
 
 // Config
 type ConfigOpts struct {
-	Args ConfigArgs `positional-args:"true" required:"true"`
-	Name string     `long:"name" description:"Config name" default:"default"`
+	Args ConfigArgs `positional-args:"true"`
+	Name string     `long:"name" description:"Config name"`
+	Type string     `long:"type" description:"Config type"`
 
 	cmd
 }
 
 type ConfigArgs struct {
-	Type string `positional-arg-name:"TYPE" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`
+	ID string `positional-arg-name:"ID" description:"Config ID"`
 }
 
 type ConfigsOpts struct {
-	Name string `long:"name" description:"Config name" optional:"true"`
-	Type string `long:"type" description:"Config type" optional:"true"`
+	Name   string `long:"name" description:"Config name" optional:"true"`
+	Type   string `long:"type" description:"Config type" optional:"true"`
+	Recent int    `long:"recent" short:"r" description:"Number of configs to show" optional:"true" optional-value:"1" default:"1"`
 
 	cmd
 }
 
+type DiffConfigOpts struct {
+	Args DiffConfigArgs `positional-args:"true" required:"true"`
+
+	cmd
+}
+
+type DiffConfigArgs struct {
+	FromID string `positional-arg-name:"FROM" description:"ID of first config to compare"`
+	ToID   string `positional-arg-name:"TO" description:"ID of second config to compare"`
+}
+
 type UpdateConfigOpts struct {
 	Args UpdateConfigArgs `positional-args:"true" required:"true"`
-	Name string           `long:"name" description:"Config name" default:"default"`
+	Type string           `long:"type" required:"true" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`
+	Name string           `long:"name" required:"true" description:"Config name"`
 	VarFlags
 	OpsFlags
 	cmd
 }
 
 type UpdateConfigArgs struct {
-	Type   string       `positional-arg-name:"TYPE" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`
 	Config FileBytesArg `positional-arg-name:"PATH" description:"Path to a YAML config file"`
 }
 
 type DeleteConfigOpts struct {
-	Args DeleteConfigArgs `positional-args:"true" required:"true"`
-	Name string           `long:"name" description:"Config name" default:"default"`
+	Args DeleteConfigArgs `positional-args:"true"`
+	Type string           `long:"type" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`
+	Name string           `long:"name" description:"Config name"`
 
 	cmd
 }
 
 type DeleteConfigArgs struct {
-	Type string `positional-arg-name:"TYPE" description:"Config type, e.g. 'cloud', 'runtime', or 'cpi'"`
+	ID string `positional-arg-name:"ID" description:"Config ID"`
 }
 
 // Cloud config
@@ -677,9 +692,10 @@ type InstancesOpts struct {
 }
 
 type VMsOpts struct {
-	DNS        bool `long:"dns"               description:"Show DNS A records"`
-	Vitals     bool `long:"vitals"            description:"Show vitals"`
-	Deployment string
+	DNS             bool `long:"dns"               description:"Show DNS A records"`
+	Vitals          bool `long:"vitals"            description:"Show vitals"`
+	CloudProperties bool `long:"cloud-properties"  description:"Show cloud properties"`
+	Deployment      string
 	cmd
 }
 

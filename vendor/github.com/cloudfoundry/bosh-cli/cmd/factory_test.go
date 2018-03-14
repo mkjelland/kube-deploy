@@ -320,33 +320,6 @@ var _ = Describe("Factory", func() {
 		})
 	})
 
-	Describe("update-config command", func() {
-		BeforeEach(func() {
-			err := fs.WriteFileString(fakeFilePath, "")
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		It("uses 'default' as default name", func() {
-			cmd, err := factory.New([]string{"update-config", "my-type", fakeFilePath})
-			Expect(err).ToNot(HaveOccurred())
-
-			opts := cmd.Opts.(*UpdateConfigOpts)
-
-			Expect(opts.Name).To(Equal("default"))
-		})
-	})
-
-	Describe("delete-config command", func() {
-		It("uses 'default' as default name", func() {
-			cmd, err := factory.New([]string{"delete-config", "my-type"})
-			Expect(err).ToNot(HaveOccurred())
-
-			opts := cmd.Opts.(*DeleteConfigOpts)
-
-			Expect(opts.Name).To(Equal("default"))
-		})
-	})
-
 	Describe("help options", func() {
 		It("has a help flag", func() {
 			cmd, err := factory.New([]string{"--help"})
@@ -407,7 +380,10 @@ var _ = Describe("Factory", func() {
 			boshOpts.SCP = SCPOpts{}
 			boshOpts.Deploy = DeployOpts{}
 			boshOpts.UpdateRuntimeConfig = UpdateRuntimeConfigOpts{}
+			boshOpts.VMs = VMsOpts{}
+			boshOpts.Instances = InstancesOpts{}
 			boshOpts.Config = ConfigOpts{}
+			boshOpts.Configs = ConfigsOpts{}
 			boshOpts.UpdateConfig = UpdateConfigOpts{}
 			boshOpts.DeleteConfig = DeleteConfigOpts{}
 			return boshOpts

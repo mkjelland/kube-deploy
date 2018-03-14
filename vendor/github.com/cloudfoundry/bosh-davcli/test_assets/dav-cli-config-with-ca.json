@@ -1,0 +1,10 @@
+{
+    "user":"some user",
+    "password":"some pwd",
+    "endpoint":"https://example.com/some/endpoint",
+    "tls": {
+      "cert": {
+        "ca":"ca-cert"
+      }
+    }
+}

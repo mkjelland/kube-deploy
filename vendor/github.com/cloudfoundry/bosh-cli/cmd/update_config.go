@@ -24,7 +24,7 @@ func (c UpdateConfigCmd) Run(opts UpdateConfigOpts) error {
 		return bosherr.WrapErrorf(err, "Evaluating config")
 	}
 
-	configDiff, err := c.director.DiffConfig(opts.Args.Type, opts.Name, bytes)
+	configDiff, err := c.director.DiffConfig(opts.Type, opts.Name, bytes)
 	if err != nil {
 		return err
 	}
@@ -37,5 +37,12 @@ func (c UpdateConfigCmd) Run(opts UpdateConfigOpts) error {
 		return err
 	}
 
-	return c.director.UpdateConfig(opts.Args.Type, opts.Name, bytes)
+	config, err := c.director.UpdateConfig(opts.Type, opts.Name, bytes)
+	if err != nil {
+		return err
+	}
+
+	ConfigTable{config, c.ui}.Print()
+
+	return nil
 }
