@@ -56,11 +56,8 @@
   name = "k8s.io/client-go"
   branch = "release-5.0"
 
-[[override]]
+[[constraint]]
   name = "k8s.io/code-generator"
   # in release-1.8 the lister and informer are broken
   revision = "961bc077103364eb5bda2c40e2b560d068c9a8c6"
 
-[[override]]
-  name = "github.com/cloudfoundry/socks5-proxy"
-  revision = "4c5a6f4a4516f42756f84f04cc5b523f471c9387"
