@@ -34,7 +34,7 @@ preferences: {}
 `
 
 func NewMachineActuator(clusterClient client.ClustersInterface, machineClient client.MachinesInterface) (MachineActuator, error) {
-	return boshcreatenv.NewMachineActuator(clusterClient, machineClient)
+	return boshcreateenv.NewMachineActuator(clusterClient, machineClient)
 }
 
 func (a loggingMachineActuator) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {

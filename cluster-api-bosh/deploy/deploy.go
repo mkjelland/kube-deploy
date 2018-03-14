@@ -41,7 +41,7 @@ func NewDeployer(configPath string) *deployer {
 		configPath = apiutil.GetDefaultKubeConfigPath()
 	}
 	// TODO: NYI for bosh
-	a, err := cloud.NewMachineActuator(nil, nil, nil)
+	a, err := cloud.NewMachineActuator(nil, nil)
 	if err != nil {
 		glog.Exit(err)
 	}
