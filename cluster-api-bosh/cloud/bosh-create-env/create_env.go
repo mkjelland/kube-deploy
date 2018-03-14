@@ -39,14 +39,38 @@ func (b *BOSHClient) deployWorker(machine *clusterv1.Machine) (*config.VMState, 
 		return boshcmd.NewEnvFactory(deps, manifestPath, statePath, vars, op).Preparer()
 	}
 
-	// TODO --var-store asdf
+	varsStoreFile, err := ioutil.TempFile("", "vars-store")
+	if err != nil {
+		return nil, fmt.Errorf("creating temp vars store file: %v", err)
+	}
+
+	// TODO remove file
+
+	varsStore := &boshcmd.VarsFSStore{}
+	varsStore.FS = deps.FS
+	varsStore.UnmarshalFlag(varsStoreFile.Name())
+
 	opts := boshcmd.CreateEnvOpts{}
-	opts.Args.Manifest.Bytes = []byte(manifest)
+	opts.VarFlags.VarsFSStore = *varsStore
+
+	manifestFile, err := ioutil.TempFile("", "bosh-manifest")
+	if err != nil {
+		return nil, fmt.Errorf("creating manifest file: %v", err)
+	}
+	manifestFile.Write([]byte(manifest))
+	manifestFile.Close()
+
+	// TODO defer remove
+
+	opts.Args.Manifest.FS = deps.FS
+	opts.Args.Manifest.Path = manifestFile.Name()
+	// opts.Args.Manifest.Bytes = []byte(manifest)
 
 	file, err := ioutil.TempFile("", "bosh-state")
 	if err != nil {
 		return nil, fmt.Errorf("creating temp state file: %v", err)
 	}
+	file.Write([]byte("{}"))
 	file.Close()
 
 	fmt.Printf("bosh_state.json path: %v", file.Name())
@@ -63,7 +87,7 @@ func (b *BOSHClient) deployWorker(machine *clusterv1.Machine) (*config.VMState, 
 	vmState := &config.VMState{}
 	vmState.IP = ip
 	vmState.State = stateContents
-	// vmState.Vars = map[string]interface{} // TODO ReadFile
+	// vmState.Vars = map[string]interface{} // TODO not currently generating vars
 	_, err = b.machineClient.Update(machine)
 	if err != nil {
 		return nil, err

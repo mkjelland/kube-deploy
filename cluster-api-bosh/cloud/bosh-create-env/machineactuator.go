@@ -18,9 +18,11 @@ package boshcreateenv
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"errors"
 
+	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh-create-env/config"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh-create-env/kubo"
 
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
@@ -58,11 +60,11 @@ func (b *BOSHClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machi
 
 	boshState, err := b.deployWorker(machine)
 	if err != nil {
-		return err
+		return fmt.Errorf("deploy worker: %v", err)
 	}
 	stateBytes, err := json.Marshal(boshState)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshaling state: %v", err)
 	}
 	machine.Status.ProviderState = string(stateBytes)
 	_, err = b.machineClient.Update(machine)
@@ -85,7 +87,21 @@ func (b *BOSHClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.M
 }
 
 func (b *BOSHClient) Exists(machine *clusterv1.Machine) (bool, error) {
-	return false, errors.New("NYI")
+	if machine.Status.ProviderState == "" {
+		return false, nil
+	}
+
+	vmState := config.VMState{}
+
+	err := json.Unmarshal([]byte(machine.Status.ProviderState), &vmState)
+	if err != nil {
+		return false, fmt.Errorf("unmarshalling ProviderState: %v", err)
+	} else if vmState.IP != "" {
+		// TODO better to review bosh state for vm_cid or something more concrete
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (b *BOSHClient) GetIP(machine *clusterv1.Machine) (string, error) {

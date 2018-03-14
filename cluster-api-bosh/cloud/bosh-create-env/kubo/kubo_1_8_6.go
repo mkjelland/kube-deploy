@@ -4,19 +4,19 @@ const kubo_worker_1_8_6 = `
 - path: /releases/-
   type: replace
   value:
-    name: kubo
-    url: "https:  #storage.googleapis.com/test-boku-kubo-releases/kubo-release-1.8.6.tgz"
+    name: kubo-1.8.6
+    url: "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-1.8.6.tgz"
     version: "0+dev.4"
-    sha1: "71ad779845ed7d444c0a12647ac35a777148f40d"
+    sha1: "28159994d66e26a7ba54fbebc48237f30dba858f"
 - path: /instance_groups/0/jobs
   type: replace
   value:
   - name: kubo-dns-aliases
-    release: kubo
+    release: kubo-1.8.6
   - name: secure-var-vcap
-    release: kubo
+    release: kubo-1.8.6
   - name: flanneld
-    release: kubo
+    release: kubo-1.8.6
   - name: docker
     properties:
       bip: 172.17.0.1/24
@@ -40,14 +40,14 @@ const kubo_worker_1_8_6 = `
     #   provides:
     #     cloud-provider:
     #       as: worker
-    #   release: kubo
+    #   release: kubo-1.8.6
   - name: kubelet
     properties:
       api-token: ((kubelet-password))
       tls:
         kubelet: ((tls-kubelet))
         kubernetes: ((tls-kubernetes))
-    release: kubo
+    release: kubo-1.8.6
     consumes:
       cloud-provider:
         properties: ((cloud_provider))
@@ -56,7 +56,7 @@ const kubo_worker_1_8_6 = `
       api-token: ((kube-proxy-password))
       tls:
         kubernetes: ((tls-kubernetes))
-    release: kubo
+    release: kubo-1.8.6
 
 - path: /variables/-
   type: replace
@@ -104,7 +104,7 @@ const kubo_worker_1_8_6 = `
       alternative_names: []
       ca: kubo_ca
       common_name: kubelet.cfcr.internal
-      organization: system:nodes
+      # organization: system:nodes #
     type: certificate
 - path: /variables/-
   type: replace
@@ -119,7 +119,7 @@ const kubo_worker_1_8_6 = `
       - kubernetes.default.svc.cluster.local
       - master.cfcr.internal
       ca: kubo_ca
-      organization: system:masters
+      # organization: system:masters
     type: certificate
 - path: /variables/-
   type: replace

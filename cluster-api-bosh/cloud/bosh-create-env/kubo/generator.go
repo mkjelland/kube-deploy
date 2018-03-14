@@ -50,14 +50,20 @@ func (g ManifestGenerator) Generate(machine *v1alpha1.Machine, cluster *v1alpha1
 		return "", fmt.Errorf("unmarshalling ClusterProviderConfig: %v", err)
 	}
 
+	// TODO the nested format for variables isn't working right now?
 	vars := boshtpl.StaticVariables(providerConfig.DeploymentVars)
 	vars["name"] = machine.Name
-	vars["network"] = providerConfig.Network
+	vars["network_cidr"] = providerConfig.Network.Range
+	vars["network_ip"] = ip
+	vars["network_gw"] = providerConfig.Network.Gateway
+	vars["network_dns"] = providerConfig.Network.DNS
+	vars["network_cloud_properties"] = providerConfig.Network.CloudProperties
 	vars["cloud_provider"] = providerConfig.CloudProvider
 
-	bytes, err := tpl.Evaluate(vars, patch.Ops(ops), boshtpl.EvaluateOpts{ExpectAllKeys: true, ExpectAllVarsUsed: true})
+	// TODO ExpectAllVarsUsed should be true for strictness
+	bytes, err := tpl.Evaluate(vars, patch.Ops(ops), boshtpl.EvaluateOpts{ExpectAllKeys: false, ExpectAllVarsUsed: false})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("evaluating template: %v", err)
 	}
 
 	return string(bytes), nil
