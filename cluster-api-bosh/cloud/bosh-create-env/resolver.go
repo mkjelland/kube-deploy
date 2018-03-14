@@ -1,4 +1,4 @@
-package boshcreatenv
+package boshcreateenv
 
 import (
 	"errors"

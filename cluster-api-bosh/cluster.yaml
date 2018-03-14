@@ -1,12 +1,12 @@
 apiVersion: "cluster.k8s.io/v1alpha1"
 kind: Cluster
 metadata:
-  name: test1 
+  name: test1
 spec:
     clusterNetwork:
         services:
             cidrBlocks: ["10.96.0.0/12"]
-        pods: 
+        pods:
             cidrBlocks: ["192.168.0.0/16"]
         dnsDomain: "cluster.local"
     providerConfig: |
@@ -18,12 +18,6 @@ spec:
           "dns": ["8.8.8.8"],
           "reserved": ["10.0.8.1", "10.0.8.2", "10.0.8.3"],
         },
-        "certificate": {
-          "ca": "",
-          "private_key": "",
-          "certificate": ""
-        }
-        "api_token": "aabbccdd",
         "master_ip": "TODO",
         "cloud_provider": {
           "type": "vsphere",
@@ -37,5 +31,25 @@ spec:
             "vms": "",
             "working-dir": ""
           }
+        },
+        "deployment_vars": {
+          "tls-docker": {
+            "ca": "",
+            "private_key": "",
+            "certificate": ""
+          },
+          # "tls-kubelet": {
+          #   "ca": "",
+          #   "private_key": "",
+          #   "certificate": ""
+          # },
+          "tls-kubernetes": {
+            "ca": "",
+            "private_key": "",
+            "certificate": ""
+          },
+          "kubelet-password": "aabbccdd",
+          "kube-proxy-password": "aabbccdd",
+          ...
         }
       }

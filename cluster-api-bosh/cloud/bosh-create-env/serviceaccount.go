@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package boshcreatenv
+package boshcreateenv
 
 import (
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
