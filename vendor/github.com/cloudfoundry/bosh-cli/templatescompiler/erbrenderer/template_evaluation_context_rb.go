@@ -21,12 +21,45 @@ class Hash
   end
 end
 
+class UnknownProperty < StandardError
+  attr_reader :name
+
+  def initialize(names)
+    @names = names
+    super("Can't find property '#{names.join("', or '")}'")
+  end
+end
+
+class ActiveElseBlock
+  def initialize(template)
+    @context = template
+  end
+
+  def else
+    yield
+  end
+
+  def else_if_p(*names, &block)
+    @context.if_p(*names, &block)
+  end
+end
+
+class InactiveElseBlock
+  def else; end
+
+  def else_if_p(*names)
+    InactiveElseBlock.new
+  end
+end
+
 class TemplateEvaluationContext
   attr_reader :name, :index
   attr_reader :properties, :raw_properties
   attr_reader :spec
 
   def initialize(spec)
+    File.open("/tmp/after", "w") { |f| f.write JSON.pretty_generate(spec) }
+
     @name = spec["job"]["name"] if spec["job"].is_a?(Hash)
     @index = spec["index"]
 
@@ -44,6 +77,8 @@ class TemplateEvaluationContext
     @properties = openstruct(properties)
     @raw_properties = properties
     @spec = openstruct(spec)
+
+    @links = spec['links'] || {}
   end
 
   def get_binding
@@ -75,6 +110,30 @@ class TemplateEvaluationContext
 
   def if_link(name)
     false
+  end
+
+  def link(name)
+    link_spec = lookup_property(@links, name)
+    raise UnknownLink.new(name) if link_spec.nil?
+
+    if link_spec.has_key?('instances')
+      return create_evaluation_link(link_spec)
+    end
+
+    raise UnknownLink.new(name)
+  end
+
+  # Run a block of code if the link given exists
+  # @param [String] name of the link
+  # @yield [Object] link, which is an array of instances
+  def if_link(name)
+    link_spec = lookup_property(@links, name)
+    if link_spec.nil? || !link_spec.has_key?('instances')
+      return ActiveElseBlock.new(self)
+    else
+      yield create_evaluation_link(link_spec)
+      InactiveElseBlock.new
+    end
   end
 
   private
@@ -122,35 +181,156 @@ class TemplateEvaluationContext
     ref
   end
 
-  class UnknownProperty < StandardError
-    attr_reader :name
-
-    def initialize(names)
-      @names = names
-      super("Can't find property '#{names.join("', or '")}'")
+  def create_evaluation_link(link_spec)
+    link_instances = link_spec['instances'].map do |instance_link_spec|
+      EvaluationLinkInstance.new(
+        instance_link_spec['name'],
+        instance_link_spec['index'],
+        instance_link_spec['id'],
+        instance_link_spec['az'],
+        instance_link_spec['address'],
+        instance_link_spec['properties'],
+        instance_link_spec['bootstrap'],
+      )
     end
+
+    # if link_spec.has_key?('address')
+    #   encoder_to_inject = ManualLinkDnsEncoder.new(link_spec['address'])
+    # else
+    #   encoder_to_inject = @dns_encoder
+    # end
+
+    return EvaluationLink.new(
+      link_instances,
+      link_spec['properties'],
+      link_spec['instance_group'],
+      link_spec['default_network'],
+      link_spec['deployment_name'],
+      link_spec['domain'],
+      # encoder_to_inject,
+    )
+  end
+end
+
+class EvaluationLinkInstance
+  attr_reader :name
+  attr_reader :index
+  attr_reader :id
+  attr_reader :az
+  attr_reader :address
+  attr_reader :properties
+  attr_reader :bootstrap
+
+  def initialize(name, index, id, az, address, properties, bootstrap)
+    @name = name
+    @index = index
+    @id = id
+    @az = az
+    @address = address
+    @properties = properties
+    @bootstrap = bootstrap
   end
 
-  class ActiveElseBlock
-    def initialize(template)
-      @context = template
+  def p(*args)
+    names = Array(args[0])
+
+    names.each do |name|
+      result = lookup_property(@properties, name)
+      return result unless result.nil?
     end
 
-    def else
-      yield
-    end
-
-    def else_if_p(*names, &block)
-      @context.if_p(*names, &block)
-    end
+    return args[1] if args.length == 2
+    raise UnknownProperty.new(names)
   end
 
-  class InactiveElseBlock
-    def else; end
-
-    def else_if_p(*names)
-      InactiveElseBlock.new
+  def if_p(*names)
+    values = names.map do |name|
+      value = lookup_property(@properties, name)
+      return ActiveElseBlock.new(self) if value.nil?
+      value
     end
+
+    yield *values
+    InactiveElseBlock.new
+  end
+
+  private
+
+  def lookup_property(collection, name)
+    keys = name.split(".")
+    ref = collection
+
+    keys.each do |key|
+      ref = ref[key]
+      return nil if ref.nil?
+    end
+
+    ref
+  end
+end
+
+class EvaluationLink
+  attr_reader :instances
+  attr_reader :properties
+
+  def initialize(instances, properties, instance_group, default_network, deployment_name, root_domain) # , dns_encoder)
+    @instances = instances
+    @properties = properties
+    @instance_group = instance_group
+    @default_network = default_network
+    @deployment_name = deployment_name
+    @root_domain = root_domain
+    # @dns_encoder = dns_encoder
+  end
+
+  def p(*args)
+    names = Array(args[0])
+
+    names.each do |name|
+      result = lookup_property(@properties, name)
+      return result unless result.nil?
+    end
+
+    return args[1] if args.length == 2
+    raise UnknownProperty.new(names)
+  end
+
+  def if_p(*names)
+    values = names.map do |name|
+      value = lookup_property(@properties, name)
+      return ActiveElseBlock.new(self) if value.nil?
+      value
+    end
+
+    yield *values
+    InactiveElseBlock.new
+  end
+
+  def address(criteria = {})
+    raise NotImplementedError.new('link.address requires bosh director') # if @dns_encoder.nil?
+
+    full_criteria = criteria.merge(
+      instance_group: @instance_group,
+      default_network: @default_network,
+      deployment_name: @deployment_name,
+      root_domain: @root_domain,
+    )
+
+    @dns_encoder.encode_query(full_criteria)
+  end
+
+  private
+
+  def lookup_property(collection, name)
+    keys = name.split(".")
+    ref = collection
+
+    keys.each do |key|
+      ref = ref[key]
+      return nil if ref.nil?
+    end
+
+    ref
   end
 end
 

@@ -26,7 +26,19 @@ const (
 type ReleaseJobRef struct {
 	Name       string
 	Release    string
+	Consumes   *ReleaseJobConsumers
 	Properties *biproperty.Map
+}
+
+type ReleaseJobConsumers map[string]ReleaseJobProvider
+
+type ReleaseJobProvider struct {
+	Instances  *[]ReleaseJobProviderInstance
+	Properties *biproperty.Map
+}
+
+type ReleaseJobProviderInstance struct {
+	Address string
 }
 
 type JobNetwork struct {

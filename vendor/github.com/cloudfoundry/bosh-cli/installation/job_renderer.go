@@ -53,9 +53,10 @@ func (b *jobRenderer) RenderAndUploadFrom(installationManifest biinstallmanifest
 	// installation jobs do not get rendered with global deployment properties, only the cloud_provider properties
 	globalProperties := biproperty.Map{}
 	releaseJobProperties := map[string]*biproperty.Map{}
+	releaseJobConsumers := map[string]*biproperty.Map{}
 	jobProperties := installationManifest.Properties
 
-	renderedJobRefs, err := b.renderJobTemplates(jobs, releaseJobProperties, jobProperties, globalProperties, installationManifest.Name, stage)
+	renderedJobRefs, err := b.renderJobTemplates(jobs, releaseJobProperties, releaseJobConsumers, jobProperties, globalProperties, installationManifest.Name, stage)
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Rendering job templates for installation")
 	}
@@ -72,6 +73,7 @@ func (b *jobRenderer) RenderAndUploadFrom(installationManifest biinstallmanifest
 func (b *jobRenderer) renderJobTemplates(
 	releaseJobs []bireljob.Job,
 	releaseJobProperties map[string]*biproperty.Map,
+	releaseJobConsumers map[string]*biproperty.Map,
 	jobProperties biproperty.Map,
 	globalProperties biproperty.Map,
 	deploymentName string,
@@ -79,7 +81,7 @@ func (b *jobRenderer) renderJobTemplates(
 ) ([]RenderedJobRef, error) {
 	renderedJobRefs := make([]RenderedJobRef, 0, len(releaseJobs))
 	err := stage.Perform("Rendering job templates", func() error {
-		renderedJobList, err := b.jobListRenderer.Render(releaseJobs, releaseJobProperties, jobProperties, globalProperties, deploymentName, "")
+		renderedJobList, err := b.jobListRenderer.Render(releaseJobs, releaseJobProperties, releaseJobConsumers, jobProperties, globalProperties, deploymentName, "")
 		if err != nil {
 			return err
 		}

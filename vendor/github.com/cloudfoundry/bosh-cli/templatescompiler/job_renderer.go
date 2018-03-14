@@ -14,7 +14,7 @@ import (
 )
 
 type JobRenderer interface {
-	Render(releaseJob bireljob.Job, releaseJobProperties *biproperty.Map, jobProperties biproperty.Map, globalProperties biproperty.Map, deploymentName string, address string) (RenderedJob, error)
+	Render(releaseJob bireljob.Job, releaseJobProperties *biproperty.Map, releaseJobConsumes *biproperty.Map, jobProperties biproperty.Map, globalProperties biproperty.Map, deploymentName string, address string) (RenderedJob, error)
 }
 
 type jobRenderer struct {
@@ -40,8 +40,8 @@ func NewJobRenderer(
 	}
 }
 
-func (r *jobRenderer) Render(releaseJob bireljob.Job, releaseJobProperties *biproperty.Map, jobProperties biproperty.Map, globalProperties biproperty.Map, deploymentName string, address string) (RenderedJob, error) {
-	context := NewJobEvaluationContext(releaseJob, releaseJobProperties, jobProperties, globalProperties, deploymentName, address, r.uuidGen, r.logger)
+func (r *jobRenderer) Render(releaseJob bireljob.Job, releaseJobProperties *biproperty.Map, releaseJobConsumes *biproperty.Map, jobProperties biproperty.Map, globalProperties biproperty.Map, deploymentName string, address string) (RenderedJob, error) {
+	context := NewJobEvaluationContext(releaseJob, releaseJobProperties, releaseJobConsumes, jobProperties, globalProperties, deploymentName, address, r.uuidGen, r.logger)
 
 	sourcePath := releaseJob.ExtractedPath()
 
