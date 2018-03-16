@@ -14,6 +14,10 @@ releases: # appended by role/version ops
   version: 30.1.4
   url: https://bosh.io/d/github.com/cf-platform-eng/docker-boshrelease?v=30.1.4
   sha1: 90dc20d01a0c8a07242d9e846371a03e1a850073
+- name: bosh-dns
+  sha1: e38d3e5edd16ce2dca778440b636ab1ea61f892f
+  version: 0.0.11
+  url: https://bosh.io/d/github.com/cloudfoundry/bosh-dns-release?v=0.0.11
 resource_pools:
 - name: default
   network: default

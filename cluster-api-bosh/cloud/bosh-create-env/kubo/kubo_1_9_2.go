@@ -11,15 +11,55 @@ const kubo_worker_1_9_2 = `
 - path: /instance_groups/0/jobs
   type: replace
   value:
+  - name: bosh-dns
+    release: bosh-dns
+    properties:
+      records_file: /var/vcap/jobs/bosh-dns/dns/aliases.json
+      aliases: ((bosh-dns-aliases))
+      cache:
+        enabled: true
+      health:
+        enabled: true
+        server:
+          tls: ((/dns_healthcheck_server_tls))
+        client:
+          tls: ((/dns_healthcheck_client_tls))
   - name: kubo-dns-aliases
     release: kubo-1.9.2
-    properties: {}
+    properties:
+      master_ip: ((master_address))
+    consumes:
+      etcd:
+        instances:
+        - name: master
+          index: 0
+          address: ((master_address))
+        properties:
+          etcd:
+            advertise_urls_dns_suffix: etcd.cfcr.internal
+            ca_cert: ((tls-etcd-client.ca))
+            client_cert: ((tls-etcd-client.certificate))
+            client_key: ((tls-etcd-client.private_key))
   - name: secure-var-vcap
     release: kubo-1.9.2
     properties: {}
   - name: flanneld
     release: kubo-1.9.2
     properties: {}
+    consumes:
+      etcd:
+        instances:
+        - name: master
+          index: 0
+          address: etcd.cfcr.internal
+        properties:
+          name: master
+          etcd:
+            name: master
+            advertise_urls_dns_suffix: etcd.cfcr.internal
+            ca_cert: ((tls-etcd-client.ca))
+            client_cert: ((tls-etcd-client.certificate))
+            client_key: ((tls-etcd-client.private_key))
   - name: docker
     properties:
       bip: 172.17.0.1/24
@@ -178,4 +218,32 @@ const kubo_worker_1_9_2 = `
       ca: kubernetes-dashboard-ca
       common_name: kubernetesdashboard.cfcr.internal
     type: certificate
+- path: /variables/-
+  type: replace
+  value:
+    name: /dns_healthcheck_tls_ca
+    type: certificate
+    options:
+      is_ca: true
+      common_name: dns-healthcheck-tls-ca
+- path: /variables/-
+  type: replace
+  value:
+    name: /dns_healthcheck_server_tls
+    type: certificate
+    options:
+      ca: /dns_healthcheck_tls_ca
+      common_name: health.bosh-dns
+      extended_key_usage:
+      - server_auth
+- path: /variables/-
+  type: replace
+  value:
+    name: /dns_healthcheck_client_tls
+    type: certificate
+    options:
+      ca: /dns_healthcheck_tls_ca
+      common_name: health.bosh-dns
+      extended_key_usage:
+      - client_auth
 `
