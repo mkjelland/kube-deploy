@@ -38,7 +38,12 @@ type ReleaseJobProvider struct {
 }
 
 type ReleaseJobProviderInstance struct {
-	Address string
+	Address   string
+	Name      string
+	Index     int
+	ID        string
+	AZ        string
+	Bootstrap bool
 }
 
 type JobNetwork struct {

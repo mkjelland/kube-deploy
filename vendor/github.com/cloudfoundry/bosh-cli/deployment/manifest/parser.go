@@ -98,7 +98,12 @@ type releaseJobProvider struct {
 }
 
 type releaseJobProviderInstance struct {
-	Address string
+	Address   string
+	Name      string
+	Index     int
+	ID        string
+	AZ        string
+	Bootstrap bool
 }
 
 type stemcellRef struct {
@@ -264,7 +269,14 @@ func (p *parser) parseJobManifests(rawJobs []job) ([]Job, error) {
 							instances := []ReleaseJobProviderInstance{}
 
 							for _, instance := range provider.Instances {
-								instances = append(instances, ReleaseJobProviderInstance{Address: instance.Address})
+								instances = append(instances, ReleaseJobProviderInstance{
+									Address:   instance.Address,
+									Name:      instance.Name,
+									Index:     instance.Index,
+									ID:        instance.ID,
+									AZ:        instance.AZ,
+									Bootstrap: instance.Bootstrap,
+								})
 							}
 
 							consume.Instances = &instances

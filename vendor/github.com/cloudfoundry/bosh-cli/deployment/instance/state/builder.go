@@ -87,11 +87,16 @@ func (b *builder) Build(jobName string, instanceID int, deploymentManifest bidep
 				mapmapmap := biproperty.Map{}
 
 				if provider.Instances != nil {
-					instances := []map[string]string{}
+					instances := []map[string]interface{}{}
 
 					for _, instance := range *provider.Instances {
-						instances = append(instances, map[string]string{
-							"address": instance.Address,
+						instances = append(instances, map[string]interface{}{
+							"address":   instance.Address,
+							"name":      instance.Name,
+							"index":     instance.Index,
+							"id":        instance.ID,
+							"az":        instance.AZ,
+							"bootstrap": instance.Bootstrap,
 						})
 					}
 
