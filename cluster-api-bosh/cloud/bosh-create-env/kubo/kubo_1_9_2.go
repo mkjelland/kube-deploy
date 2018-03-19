@@ -4,18 +4,30 @@ const kubo_worker_1_9_2 = `
 - path: /releases/-
   type: replace
   value:
-    name: kubo-1.9.2
-    url: "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-1.9.2.tgz"
-    version: "0+dev.6"
-    sha1: "8f97ad894ea58471de2e0d0dfac885206bcabc68"
+    name: kubo
+    url: "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-1.9.2-dev.tgz"
+    version: "0.13.0+dev.1"
+    sha1: "88a72121764ce2415067e4c38817a29ab77259ed"
+- path: /releases/-
+  type: replace
+  value:
+    name: os-conf
+    version: 18
+    url: https://bosh.io/d/github.com/cloudfoundry/os-conf-release?v=18
+    sha1: 78d79f08ff5001cc2a24f572837c7a9c59a0e796
 - path: /instance_groups/0/jobs
   type: replace
   value:
+  - name: user_add
+    release: os-conf
+    properties:
+      users:
+      - name: jumpbox
+        public_key: ((jumpbox_ssh.public_key))
   - name: bosh-dns
     release: bosh-dns
     properties:
-      records_file: /var/vcap/jobs/bosh-dns/dns/aliases.json
-      aliases: ((bosh-dns-aliases))
+      records_file: /var/vcap/jobs/kubo-dns-aliases/dns/records.json
       cache:
         enabled: true
       health:
@@ -25,9 +37,10 @@ const kubo_worker_1_9_2 = `
         client:
           tls: ((/dns_healthcheck_client_tls))
   - name: kubo-dns-aliases
-    release: kubo-1.9.2
+    release: kubo
     properties:
       master_ip: ((master_address))
+      bosh-dns-records: ((bosh-dns-aliases))
     consumes:
       etcd:
         instances:
@@ -41,10 +54,10 @@ const kubo_worker_1_9_2 = `
             client_cert: ((tls-etcd-client.certificate))
             client_key: ((tls-etcd-client.private_key))
   - name: secure-var-vcap
-    release: kubo-1.9.2
+    release: kubo
     properties: {}
   - name: flanneld
-    release: kubo-1.9.2
+    release: kubo
     properties: {}
     consumes:
       etcd:
@@ -76,30 +89,23 @@ const kubo_worker_1_9_2 = `
       tls_cert: ((tls-docker.certificate))
       tls_key: ((tls-docker.private_key))
     release: docker
-  # - name: cloud-provider
-  #   properties:
-  #     cloud-provider:
-  #       type: gce
-  #   provides:
-  #     cloud-provider:
-  #       as: worker
-  #   release: kubo-1.9.2
+  - name: cloud-provider
+    properties:
+      cloud-provider: ((cloud_provider))
+    release: kubo
   - name: kubelet
     properties:
       api-token: ((kubelet-password))
       tls:
         kubelet: ((tls-kubelet))
         kubernetes: ((tls-kubernetes))
-      consumes:
-          cloud-provider:
-            properties: ((cloud_provider))
-    release: kubo-1.9.2
+    release: kubo
   - name: kube-proxy
     properties:
       api-token: ((kube-proxy-password))
       tls:
         kubernetes: ((tls-kubernetes))
-    release: kubo-1.9.2
+    release: kubo
 
 - path: /variables/-
   type: replace
@@ -111,6 +117,11 @@ const kubo_worker_1_9_2 = `
   value:
     name: kubelet-password
     type: password
+- path: /variables/-
+  type: replace
+  value:
+    name: jumpbox_ssh
+    type: ssh
 - path: /variables/-
   type: replace
   value:

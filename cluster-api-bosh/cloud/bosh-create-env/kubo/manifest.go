@@ -27,6 +27,7 @@ resource_pools:
       mbus:
         cert: ((mbus_bootstrap_ssl))
   cloud_properties:
+    service_account: ((worker_service_account))
     machine_type: n1-standard-2
     root_disk_size_gb: 100
     root_disk_type: pd-ssd

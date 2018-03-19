@@ -59,6 +59,7 @@ func (g ManifestGenerator) Generate(machine *v1alpha1.Machine, cluster *v1alpha1
 	vars["network_dns"] = providerConfig.Network.DNS
 	vars["network_cloud_properties"] = providerConfig.Network.CloudProperties
 	vars["cloud_provider"] = providerConfig.CloudProvider
+	vars["worker_service_account"] = providerConfig.DeploymentVars["worker_service_account"]
 
 	// TODO ExpectAllVarsUsed should be true for strictness
 	bytes, err := tpl.Evaluate(vars, patch.Ops(ops), boshtpl.EvaluateOpts{ExpectAllKeys: false, ExpectAllVarsUsed: false})

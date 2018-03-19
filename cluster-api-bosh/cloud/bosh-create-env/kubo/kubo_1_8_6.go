@@ -89,14 +89,10 @@ const kubo_worker_1_8_6 = `
       tls_cert: ((tls-docker.certificate))
       tls_key: ((tls-docker.private_key))
     release: docker
-    # - name: cloud-provider
-    #   properties:
-    #     cloud-provider:
-    #       type: gce
-    #   provides:
-    #     cloud-provider:
-    #       as: worker
-    #   release: kubo
+  - name: cloud-provider
+    properties:
+      cloud-provider: ((cloud_provider))
+    release: kubo
   - name: kubelet
     properties:
       api-token: ((kubelet-password))
@@ -104,9 +100,6 @@ const kubo_worker_1_8_6 = `
         kubelet: ((tls-kubelet))
         kubernetes: ((tls-kubernetes))
     release: kubo
-    consumes:
-      cloud-provider:
-        properties: ((cloud_provider))
   - name: kube-proxy
     properties:
       api-token: ((kube-proxy-password))
