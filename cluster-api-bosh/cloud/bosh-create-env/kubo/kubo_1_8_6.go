@@ -6,8 +6,8 @@ const kubo_worker_1_8_6 = `
   value:
     name: kubo
     url: "https://storage.googleapis.com/test-boku-kubo-releases/kubo-release-1.8.6-dev.tgz"
-    version: "0.11.1+dev.7"
-    sha1: "b4cc5d71f9796e46ab61d573a3f8b462d1eb24f3"
+    version: "0.11.1+dev.11"
+    sha1: "e02cfd63a18da223bd8d9783a54a6eb2f4c8e9b0"
 - path: /releases/-
   type: replace
   value:
@@ -21,8 +21,7 @@ const kubo_worker_1_8_6 = `
   - name: bosh-dns
     release: bosh-dns
     properties:
-      records_file: /var/vcap/jobs/bosh-dns/dns/aliases.json
-      aliases: ((bosh-dns-aliases))
+      records_file: /var/vcap/jobs/kubo-dns-aliases/dns/records.json
       cache:
         enabled: true
       health:
@@ -41,6 +40,7 @@ const kubo_worker_1_8_6 = `
     release: kubo
     properties:
       master_ip: ((master_address))
+      bosh-dns-records: ((bosh-dns-aliases))
     consumes:
       etcd:
         instances:
