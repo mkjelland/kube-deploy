@@ -29,7 +29,7 @@ const kubo_worker_1_8_6 = `
         server:
           tls: ((/dns_healthcheck_server_tls))
         client:
-          tls: ((/dns_healthcheck_client_tls))  
+          tls: ((/dns_healthcheck_client_tls))
   - name: user_add
     release: os-conf
     properties:
@@ -91,7 +91,7 @@ const kubo_worker_1_8_6 = `
     release: docker
   - name: cloud-provider
     properties:
-      cloud-provider: ((cloud_provider))
+      cloud-provider: ((cloud_options))
     release: kubo
   - name: kubelet
     properties:

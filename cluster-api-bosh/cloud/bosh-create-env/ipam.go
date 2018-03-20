@@ -40,7 +40,7 @@ func (b *BOSHClient) nextIp() (string, error) {
 	// Build a list of IPs not to use
 	// HACK: reserved IPs must be single IP addresses (no ranges)
 	// TODO reserve network and broadcast ip
-	reservedIps := boshCluster.Network.Reserved
+	reservedIps := boshCluster.VM.Network.Reserved
 	list, err := b.machineClient.List(metav1.ListOptions{})
 	if err != nil {
 		return "", fmt.Errorf("listing machine records: %v", err)
@@ -61,7 +61,7 @@ func (b *BOSHClient) nextIp() (string, error) {
 		reservedIps = append(reservedIps, vmState.IP)
 	}
 
-	ip, ipnet, err := net.ParseCIDR(boshCluster.Network.Range)
+	ip, ipnet, err := net.ParseCIDR(boshCluster.VM.Network.Range)
 	if err != nil {
 		return "", fmt.Errorf("parsing BoshCluster.Range: %v", err)
 	}

@@ -91,7 +91,7 @@ const kubo_worker_1_9_2 = `
     release: docker
   - name: cloud-provider
     properties:
-      cloud-provider: ((cloud_provider))
+      cloud-provider: ((cloud_options))
     release: kubo
   - name: kubelet
     properties:

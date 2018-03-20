@@ -53,13 +53,21 @@ func (g ManifestGenerator) Generate(machine *v1alpha1.Machine, cluster *v1alpha1
 	// TODO the nested format for variables isn't working right now?
 	vars := boshtpl.StaticVariables(providerConfig.DeploymentVars)
 	vars["name"] = machine.Name
-	vars["network_cidr"] = providerConfig.Network.Range
-	vars["network_ip"] = ip
-	vars["network_gw"] = providerConfig.Network.Gateway
-	vars["network_dns"] = providerConfig.Network.DNS
-	vars["network_cloud_properties"] = providerConfig.Network.CloudProperties
-	vars["cloud_provider"] = providerConfig.CloudProvider
-	vars["worker_service_account"] = providerConfig.WorkerServiceAccount
+	vars["vm_network_ip"] = ip
+	vars["vm_network_cidr"] = providerConfig.VM.Network.Range
+	vars["vm_network_gw"] = providerConfig.VM.Network.Gateway
+	vars["vm_network_dns"] = providerConfig.VM.Network.DNS
+	vars["vm_network_cloud_properties"] = providerConfig.VM.Network.CloudProperties
+	vars["vm_cloud_properties"] = providerConfig.VM.CloudProperties
+	vars["vm_stemcell"] = providerConfig.VM.Stemcell
+	vars["cloud_type"] = providerConfig.Cloud.Type
+	vars["cloud_options"] = providerConfig.Cloud.Options
+	vars["cloud_release_name"] = providerConfig.Cloud.Release.Name
+	vars["cloud_release_sha1"] = providerConfig.Cloud.Release.Sha1
+	vars["cloud_release_url"] = providerConfig.Cloud.Release.URL
+	vars["cloud_release_version"] = providerConfig.Cloud.Release.Version
+	vars["cloud_release_job"] = providerConfig.Cloud.Release.Job
+	vars["cloud_release_properties"] = providerConfig.Cloud.Release.Properties
 
 	// TODO ExpectAllVarsUsed should be true for strictness
 	bytes, err := tpl.Evaluate(vars, patch.Ops(ops), boshtpl.EvaluateOpts{ExpectAllKeys: false, ExpectAllVarsUsed: false})

@@ -1,0 +1,107 @@
+apiVersion: "cluster.k8s.io/v1alpha1"
+kind: Cluster
+metadata:
+  name: acme-test-one
+spec:
+  clusterNetwork:
+      services:
+          cidrBlocks: ["10.96.0.0/12"]
+      pods:
+          cidrBlocks: ["192.168.0.0/16"]
+      dnsDomain: "cluster.local"
+  providerConfig: |
+    {
+      "master_ip": "1.2.3.4",
+      "cloud": {
+        "release": {
+          "name": "bosh-google-cpi",
+          "job": "google_cpi",
+          "version": "27.0.0",
+          "url": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-google-cpi-release?v=27.0.0",
+          "sha1": "cbbf73c102b1f27d3db15d95bc971b2b4995c78e",
+          "properties": {
+            "project": "acme-test-one"
+          }
+        },
+        "options": {
+          "type": "gce",
+          "gce": {
+            "project-id": "acme-test-one",
+            "network-name": "kubo-network",
+            "worker-node-tag": "demo-gce-node-worker"
+          }
+        }
+      },
+      "vm": {
+        "network": {
+          "netmask": "255.255.255.0",
+          "range": "10.0.0.0/24",
+          "gateway": "10.0.0.1",
+          "dns": ["10.0.0.1"],
+          "reserved": [
+            "10.0.0.0",
+            "10.0.0.1",
+            "10.0.0.2",
+            "10.0.0.3",
+            "10.0.0.4",
+            "10.0.0.5",
+            "10.0.0.6",
+            "10.0.0.7",
+            "10.0.0.8",
+            "10.0.0.9"
+          ],
+          "cloud_properties": {
+            "network_name": "acme-test-one",
+            "subnetwork_name": "acme-test-one-us-west1",
+            "zone": "us-west1-a"
+          }
+        },
+        "cloud_properties": {
+          "worker_service_account": "acme-test-one@acme-test-one.iam.gserviceaccount.com",
+          "service_account": "acme-test-one@acme-test-one.iam.gserviceaccount.com",
+          "machine_type": "n1-standard-2",
+          "root_disk_size_gb": 100,
+          "root_disk_type": "pd-ssd",
+          "tags": [
+            "no-ip",
+            "internal"
+          ],
+          "zone": "us-west1-a"
+        },
+        "stemcell": {
+          "url": "https://bosh.io/d/stemcells/bosh-google-kvm-ubuntu-trusty-go_agent?v=3468.21",
+          "sha1": "242b39fd71da44a352e19ced355736d6f313aab4"
+        }
+      },
+      "deployment_vars": {
+          "bosh-dns-aliases": {
+            "records": [
+              ["10.0.0.6", "db2fbb63-766b-4aa3-8f0d-3a03cbb10ddf.master.default.demo.bosh"],
+            ],
+            "version": 1,
+            "record_keys": ["id", "num_id", "instance_group", "group_ids", "az", "az_id", "network", "network_id", "deployment", "ip", "domain", "agent_id", "instance_index"],
+            "record_infos": [
+              ["db2fbb63-766b-4aa3-8f0d-3a03cbb10ddf", "142", "master", ["73"], "z1", "1", "default", "2", "demo", "10.0.0.6", "bosh", "e6d9ef20-d950-4ea8-8973-a62b68f095da",0]
+            ]
+          },
+          "master_address": "db2fbb63-766b-4aa3-8f0d-3a03cbb10ddf.master.default.demo.bosh",
+          "tls-kubelet.private_key": "-----BEGIN RSA PRIVATE KEY-----\n...snip...\n-----END RSA PRIVATE KEY-----\n",
+          "tls-kubelet.certificate": "-----BEGIN CERTIFICATE-----\n...snip...\n-----END CERTIFICATE-----\n",
+          "tls-kubelet.ca": "-----BEGIN CERTIFICATE-----\n...snip...\n-----END CERTIFICATE-----\n",
+
+          "tls-etcd-client.private_key": "-----BEGIN RSA PRIVATE KEY-----\n...snip...\n-----END RSA PRIVATE KEY-----\n",
+          "tls-etcd-client.certificate": "-----BEGIN CERTIFICATE-----\n...snip...\n-----END CERTIFICATE-----\n",
+          "tls-etcd-client.ca": "-----BEGIN CERTIFICATE-----\n...snip...\n-----END CERTIFICATE-----\n",
+          "tls-docker.ca": "-----BEGIN CERTIFICATE-----\n...snip...\n-----END CERTIFICATE-----\n",
+          "tls-docker.certificate": "-----BEGIN CERTIFICATE-----\n...snip...\n-----END CERTIFICATE-----\n",
+          "tls-docker.private_key": "-----BEGIN RSA PRIVATE KEY-----\n...snip...\n-----END RSA PRIVATE KEY-----\n"
+        ,
+
+          "tls-kubernetes.ca": "-----BEGIN CERTIFICATE-----\n...snip...\n-----END CERTIFICATE-----\n",
+          "tls-kubernetes.certificate": "-----BEGIN CERTIFICATE-----\n...snip...\n-----END CERTIFICATE-----\n",
+          "tls-kubernetes.private_key": "-----BEGIN RSA PRIVATE KEY----\n...snip...\n-----END RSA PRIVATE KEY-----\n"
+        ,
+        "kubelet-password": "...snip...",
+        "kube-proxy-password": "...snip..."
+      }
+    }

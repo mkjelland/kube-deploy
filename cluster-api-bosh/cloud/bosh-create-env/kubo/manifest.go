@@ -6,10 +6,10 @@ package kubo
 const base_manifest = `
 name: ((name))
 releases: # appended by role/version ops
-- name: bosh-google-cpi
-  version: 27.0.0
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-google-cpi-release?v=27.0.0
-  sha1: cbbf73c102b1f27d3db15d95bc971b2b4995c78e
+- name: ((cloud_release_name))
+  version: ((cloud_release_version))
+  url: ((cloud_release_url))
+  sha1: ((cloud_release_sha1))
 - name: docker
   version: 30.1.4
   url: https://bosh.io/d/github.com/cf-platform-eng/docker-boshrelease?v=30.1.4
@@ -26,48 +26,38 @@ resource_pools:
       password: '*'
       mbus:
         cert: ((mbus_bootstrap_ssl))
-  cloud_properties:
-    service_account: ((worker_service_account))
-    machine_type: n1-standard-2
-    root_disk_size_gb: 100
-    root_disk_type: pd-ssd
-    tags:
-    - no-ip
-    - internal
-    zone: us-west1-a
-  stemcell:
-    url: https://bosh.io/d/stemcells/bosh-google-kvm-ubuntu-trusty-go_agent?v=3468.21
-    sha1: 242b39fd71da44a352e19ced355736d6f313aab4
+  cloud_properties: ((vm_cloud_properties))
+  stemcell: ((vm_stemcell))
 networks:
 - name: default
   type: manual
   subnets:
-  - range: ((network_cidr))
-    gateway: ((network_gw))
+  - range: ((vm_network_cidr))
+    gateway: ((vm_network_gw))
     static:
-    - ((network_ip))
-    dns: ((network_dns))
-    cloud_properties: ((network_cloud_properties))
+    - ((vm_network_ip))
+    dns: ((vm_network_dns))
+    cloud_properties: ((vm_network_cloud_properties))
 cloud_provider:
-  mbus: https://mbus:((mbus_bootstrap_password))@((network_ip)):6868
+  mbus: https://mbus:((mbus_bootstrap_password))@((vm_network_ip)):6868
   cert: ((mbus_bootstrap_ssl))
   template:
-    name: google_cpi
-    release: bosh-google-cpi
+    name: ((cloud_release_job))
+    release: ((cloud_release_name))
   properties:
     agent: {mbus: "https://mbus:((mbus_bootstrap_password))@0.0.0.0:6868"}
     blobstore: {provider: local, path: /var/vcap/micro_bosh/data/cache}
     ntp:
     - 169.254.169.254
-    google:
-      # TODO provider config
-      project: graphite-test-mkjelland
+    # cheating
+    google: ((cloud_release_properties))
+    vcenter: ((cloud_release_properties))
 instance_groups:
 - name: ((name))
   networks:
   - name: default
     static_ips:
-    - ((network_ip))
+    - ((vm_network_ip))
   jobs: [] # applied by role/version ops
   instances: 1
   resource_pool: default
@@ -83,7 +73,7 @@ variables:
     type: certificate
     options:
       ca: default_ca
-      common_name: ((network_ip))
-      alternative_names: [((network_ip))]
+      common_name: ((vm_network_ip))
+      alternative_names: [((vm_network_ip))]
 
 `
