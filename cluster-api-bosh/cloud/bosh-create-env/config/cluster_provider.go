@@ -4,9 +4,10 @@ type ClusterProvider struct {
 	Network ClusterProviderNetwork `json:"network"`
 
 	// Cluster level properties
-	MasterIp       string                 `json:"master_ip"`
-	CloudProvider  map[string]interface{} `json:"cloud_provider"`
-	DeploymentVars map[string]interface{} `json:"deployment_vars"`
+	MasterIp             string                 `json:"master_ip"`
+	CloudProvider        map[string]interface{} `json:"cloud_provider"`
+	WorkerServiceAccount string                 `json:"worker_service_account"`
+	DeploymentVars       map[string]interface{} `json:"deployment_vars"`
 }
 
 type ClusterProviderNetwork struct {
