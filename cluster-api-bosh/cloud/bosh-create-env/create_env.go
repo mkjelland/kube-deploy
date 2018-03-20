@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"encoding/json"
+
 	boshcmd "github.com/cloudfoundry/bosh-cli/cmd"
 	boshtpl "github.com/cloudfoundry/bosh-cli/director/template"
 	boshui "github.com/cloudfoundry/bosh-cli/ui"
@@ -87,6 +89,8 @@ func (b *BOSHClient) deployWorker(machine *clusterv1.Machine) (*config.VMState, 
 	vmState := &config.VMState{}
 	vmState.IP = ip
 	vmState.State = stateContents
+	vmStateBytes, err := json.Marshal(vmState)
+	machine.Status.ProviderState = string(vmStateBytes)
 	// vmState.Vars = map[string]interface{} // TODO not currently generating vars
 	_, err = b.machineClient.Update(machine)
 	if err != nil {
