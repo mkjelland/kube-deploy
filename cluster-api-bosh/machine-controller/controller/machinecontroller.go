@@ -91,8 +91,13 @@ func NewMachineController(config *Configuration) *MachineController {
 		glog.Fatalf("error creating machine client: %v", err)
 	}
 
+	nodeClient, err := nodeClient(config.Kubeconfig)
+	if err != nil {
+		glog.Fatalf("error creating node client: %v", err)
+	}
+
 	// Determine cloud type from cluster CRD when available
-	actuator, err := cloud.NewMachineActuator(clusterClient.Clusters(), clusterClient.Machines())
+	actuator, err := cloud.NewMachineActuator(clusterClient.Clusters(), nodeClient, clusterClient.Machines())
 	if err != nil {
 		glog.Fatalf("error creating machine actuator: %v", err)
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/golang/glog"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh-create-env"
 
+	"k8s.io/client-go/kubernetes"
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
 )
@@ -33,8 +34,8 @@ kind: config
 preferences: {}
 `
 
-func NewMachineActuator(clusterClient client.ClustersInterface, machineClient client.MachinesInterface) (MachineActuator, error) {
-	return boshcreateenv.NewMachineActuator(clusterClient, machineClient)
+func NewMachineActuator(clusterClient client.ClustersInterface, nodeClient *kubernetes.Clientset, machineClient client.MachinesInterface) (MachineActuator, error) {
+	return boshcreateenv.NewMachineActuator(clusterClient, nodeClient, machineClient)
 }
 
 func (a loggingMachineActuator) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {

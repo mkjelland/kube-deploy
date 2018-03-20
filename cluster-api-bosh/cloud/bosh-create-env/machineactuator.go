@@ -22,6 +22,7 @@ import (
 
 	"errors"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh-create-env/config"
 	"k8s.io/kube-deploy/cluster-api-bosh/cloud/bosh-create-env/kubo"
 
@@ -29,10 +30,13 @@ import (
 	clusterv1 "k8s.io/kube-deploy/cluster-api/api/cluster/v1alpha1"
 	"k8s.io/kube-deploy/cluster-api/client"
 	apiutil "k8s.io/kube-deploy/cluster-api/util"
+
+	"k8s.io/client-go/kubernetes"
 )
 
 type BOSHClient struct {
 	machineClient client.MachinesInterface
+	nodeClient    *kubernetes.Clientset
 	clusterClient client.ClustersInterface
 
 	generator ManifestGenerator
@@ -46,9 +50,10 @@ func (b *BOSHClient) CreateMachineController(cluster *clusterv1.Cluster, initial
 	return errors.New("NYI")
 }
 
-func NewMachineActuator(clusterClient client.ClustersInterface, machineClient client.MachinesInterface) (*BOSHClient, error) {
+func NewMachineActuator(clusterClient client.ClustersInterface, nodeClient *kubernetes.Clientset, machineClient client.MachinesInterface) (*BOSHClient, error) {
 	return &BOSHClient{
 		machineClient: machineClient,
+		nodeClient:    nodeClient,
 		clusterClient: clusterClient,
 		generator:     kubo.NewManifestGenerator(),
 	}, nil
@@ -95,12 +100,13 @@ func (b *BOSHClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.M
 		return errors.New("master node updating NYI")
 	}
 
-	currentMachine, err := b.GetMachineForGoal(goalMachine)
+	node, err := b.GetNodeForGoal(goalMachine)
 	if err != nil {
 		return fmt.Errorf("Error getting actual machine: %v", err)
 	}
 
-	if currentMachine.Spec.Versions.Kubelet != goalMachine.Spec.Versions.Kubelet {
+	if node.Status.NodeInfo.KubeletVersion != "v"+goalMachine.Spec.Versions.Kubelet {
+		fmt.Println("Kubelet verions node: %v machine %v", node.Status.NodeInfo.KubeletVersion, goalMachine.Spec.Versions.Kubelet)
 		err = b.Delete(goalMachine)
 		if err != nil {
 			return fmt.Errorf("Error in update, deleting vm: %v", err)
@@ -133,8 +139,8 @@ func (b *BOSHClient) Exists(machine *clusterv1.Machine) (bool, error) {
 	return false, nil
 }
 
-func (b *BOSHClient) GetMachineForGoal(goalMachine *clusterv1.Machine) (*clusterv1.Machine, error) {
-	list, err := b.machineClient.List(metav1.ListOptions{})
+func (b *BOSHClient) GetNodeForGoal(goalMachine *clusterv1.Machine) (*v1.Node, error) {
+	list, err := b.nodeClient.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("Error getting machines from machine client: %v", err)
 	}
@@ -144,16 +150,14 @@ func (b *BOSHClient) GetMachineForGoal(goalMachine *clusterv1.Machine) (*cluster
 		return nil, fmt.Errorf("Error unmarshalling provider state: %v", err)
 	}
 	goalIP := vmStateGoal.IP
-	for _, m := range list.Items {
-		vmState := &config.VMState{}
-		err := json.Unmarshal([]byte(m.Status.ProviderState), vmState)
-		if err != nil {
-			return nil, fmt.Errorf("Error unmarshalling provider state: %v", err)
+	for _, n := range list.Items {
+		addresses := n.Status.Addresses
+		for _, a := range addresses {
+			if a.Type == "InternalIP" && a.Address == goalIP {
+				return &n, nil
+			}
 		}
 
-		if vmState.IP == goalIP {
-			return &m, nil
-		}
 	}
 	return nil, fmt.Errorf("Could not find machine for IP %v", goalIP)
 }
