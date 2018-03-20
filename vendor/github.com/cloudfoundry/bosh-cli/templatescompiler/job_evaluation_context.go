@@ -34,6 +34,7 @@ type RootContext struct {
 	JobContext jobContext `json:"job"`
 	Deployment string     `json:"deployment"`
 	Address    string     `json:"address,omitempty"`
+	IP         string     `json:"ip,omitempty"`
 
 	// Usually is accessed with <%= spec.networks.default.ip %>
 	NetworkContexts map[string]networkContext `json:"networks"`
@@ -102,6 +103,7 @@ func (ec jobEvaluationContext) MarshalJSON() ([]byte, error) {
 
 	if len(ec.address) > 0 {
 		context.Address = ec.address
+		context.IP = ec.address
 	}
 
 	context.ID, err = ec.uuidGen.Generate()
