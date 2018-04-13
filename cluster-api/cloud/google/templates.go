@@ -28,6 +28,7 @@ type templateParams struct {
 	Token        string
 	Cluster      *clusterv1.Cluster
 	Machine      *clusterv1.Machine
+	Project      string
 	DockerImages []string
 	Preloaded    bool
 }
@@ -210,12 +211,30 @@ systemctl start docker || true
 
 sysctl net.bridge.bridge-nf-call-iptables=1
 
+
 # kubeadm uses 10th IP as DNS server
 CLUSTER_DNS_SERVER=$(prips ${SERVICE_CIDR} | head -n 11 | tail -n 1)
 
 sed -i "s/KUBELET_DNS_ARGS=[^\"]*/KUBELET_DNS_ARGS=--cluster-dns=${CLUSTER_DNS_SERVER} --cluster-domain=${CLUSTER_DNS_DOMAIN}/" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+sed -i "2iEnvironment=\"KUBELET_EXTRA_ARGS=--cloud-provider=gce --cloud-config=/etc/kubernetes/pki/cloud-config\"" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 systemctl daemon-reload
 systemctl restart kubelet.service
+
+PROJECT={{ .Project }}
+NETWORK=default
+SUBNETWORK=kubernetes
+CLUSTER_NAME={{ .Cluster.Name }}
+NODE_TAG="$CLUSTER_NAME-worker"
+
+mkdir /etc/kubernetes/pki/
+
+cat > /etc/kubernetes/pki/cloud-config <<EOF
+[global]
+project-id = ${PROJECT}
+network-name = ${NETWORK}
+subnetwork-name = ${SUBNETWORK}
+node-tags = ${NODE_TAG}
+EOF
 
 kubeadm join --token "${TOKEN}" "${MASTER}" --skip-preflight-checks
 
@@ -262,6 +281,11 @@ CONTROL_PLANE_VERSION={{ .Machine.Spec.Versions.ControlPlane }}
 CLUSTER_DNS_DOMAIN={{ .Cluster.Spec.ClusterNetwork.ServiceDomain }}
 POD_CIDR={{ getSubnet .Cluster.Spec.ClusterNetwork.Pods }}
 SERVICE_CIDR={{ getSubnet .Cluster.Spec.ClusterNetwork.Services }}
+PROJECT={{ .Project }}
+NETWORK=default
+SUBNETWORK=kubernetes
+CLUSTER_NAME={{ .Cluster.Name }}
+NODE_TAG="$CLUSTER_NAME-worker"
 
 # kubeadm uses 10th IP as DNS server
 CLUSTER_DNS_SERVER=$(prips ${SERVICE_CIDR} | head -n 11 | tail -n 1)
@@ -302,15 +326,59 @@ echo $PRIVATEIP > /tmp/.ip
 ` +
 	"PUBLICIP=`curl --retry 5 -sfH \"Metadata-Flavor: Google\" \"http://metadata/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip\"`" + `
 
+mkdir -p /etc/kubernetes/pki/
 
-kubeadm init --apiserver-bind-port ${PORT} --token ${TOKEN} --kubernetes-version v${CONTROL_PLANE_VERSION} \
-             --apiserver-advertise-address ${PUBLICIP} --apiserver-cert-extra-sans ${PUBLICIP} ${PRIVATEIP} \
-             --service-cidr ${SERVICE_CIDR}
+cat > /etc/kubernetes/pki/cloud-config <<EOF
+[global]
+project-id = ${PROJECT}
+network-name = ${NETWORK}
+subnetwork-name = ${SUBNETWORK}
+node-tags = ${NODE_TAG}
+EOF
+
+cat > /etc/kubernetes/kubeadm_config.yaml <<EOF
+apiVersion: kubeadm.k8s.io/v1alpha1
+kind: MasterConfiguration
+api:
+  advertiseAddress: ${PUBLICIP}
+  bindPort: ${PORT}
+networking:
+  serviceSubnet: ${SERVICE_CIDR}
+kubernetesVersion: v${CONTROL_PLANE_VERSION}
+cloudProvider: gce
+token: ${TOKEN}
+apiServerExtraArgs:
+  cloud-config: /etc/kubernetes/pki/cloud-config
+controllerManagerExtraArgs:
+  cluster-cidr: ${POD_CIDR}
+  service-cluster-ip-range: ${SERVICE_CIDR}
+  allocate-node-cidrs: "true"
+  cloud-config: /etc/kubernetes/pki/cloud-config
+apiServerCertSANs:
+- ${PUBLICIP}
+- ${PRIVATEIP}
+EOF
+
+kubeadm init --config /etc/kubernetes/kubeadm_config.yaml
 
 # install weavenet
 sysctl net.bridge.bridge-nf-call-iptables=1
 export kubever=$(kubectl version --kubeconfig /etc/kubernetes/admin.conf | base64 | tr -d '\n')
 kubectl apply --kubeconfig /etc/kubernetes/admin.conf -f "https://cloud.weave.works/k8s/net?k8s-version=$kubever"
+
+# add default storage class
+cat > /etc/kubernetes/default-storage-class.yaml <<EOF
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: standard
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-standard
+EOF
+kubectl apply --kubeconfig /etc/kubernetes/admin.conf -f /etc/kubernetes/default-storage-class.yaml
 
 for tries in $(seq 1 60); do
 	kubectl --kubeconfig /etc/kubernetes/kubelet.conf annotate --overwrite node $(hostname) machine=${MACHINE} && break

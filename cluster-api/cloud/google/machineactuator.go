@@ -136,6 +136,20 @@ func (gce *GCEClient) CreateMachineController(cluster *clusterv1.Cluster, initia
 	return nil
 }
 
+func (gce *GCEClient) ProvisionClusterDependencies(cluster *clusterv1.Cluster, initialMachines []*clusterv1.Machine) error {
+	err := gce.CreateMasterNodeServiceAccount(cluster, initialMachines)
+	if err != nil {
+		return err
+	}
+
+	err = gce.CreateWorkerNodeServiceAccount(cluster, initialMachines)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
 	config, err := gce.providerconfig(machine.Spec.ProviderConfig)
 	if err != nil {
@@ -165,6 +179,7 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 				Token:     gce.kubeadmToken,
 				Cluster:   cluster,
 				Machine:   machine,
+				Project:   config.Project,
 				Preloaded: preloaded,
 			},
 		)
@@ -181,6 +196,7 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 				Token:     gce.kubeadmToken,
 				Cluster:   cluster,
 				Machine:   machine,
+				Project:   config.Project,
 				Preloaded: preloaded,
 			},
 		)
@@ -219,6 +235,10 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 		if gce.machineClient == nil {
 			labels[BootstrapLabelKey] = "true"
 		}
+		tags := []string{"https-server"}
+		if !util.IsMaster(machine) {
+			tags = append(tags, fmt.Sprintf("%s-worker", cluster.Name))
+		}
 
 		op, err := gce.service.Instances.Insert(project, zone, &compute.Instance{
 			Name:        name,
@@ -248,7 +268,15 @@ func (gce *GCEClient) Create(cluster *clusterv1.Cluster, machine *clusterv1.Mach
 				Items: metadataItems,
 			},
 			Tags: &compute.Tags{
-				Items: []string{"https-server"},
+				Items: tags,
+			},
+			ServiceAccounts: []*compute.ServiceAccount{
+				{
+					Email: gce.GetDefaultServiceAccountForMachine(cluster, machine),
+					Scopes: []string{
+						compute.CloudPlatformScope,
+					},
+				},
 			},
 			Labels: labels,
 		}).Do()
