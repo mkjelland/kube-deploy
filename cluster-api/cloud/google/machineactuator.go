@@ -357,7 +357,16 @@ func (gce *GCEClient) Delete(machine *clusterv1.Machine) error {
 }
 
 func (gce *GCEClient) PostDelete(cluster *clusterv1.Cluster, machines []*clusterv1.Machine) error {
-	return gce.DeleteMachineControllerServiceAccount(cluster, machines)
+	if err := gce.DeleteMasterNodeServiceAccount(cluster, machines); err != nil {
+		return fmt.Errorf("error deleting master node service account: %v", err)
+	}
+	if err := gce.DeleteWorkerNodeServiceAccount(cluster, machines); err != nil {
+		return fmt.Errorf("error deleting worker node service account: %v", err)
+	}
+	if err := gce.DeleteMachineControllerServiceAccount(cluster, machines); err != nil {
+		return fmt.Errorf("error deleting machine controller service account: %v", err)
+	}
+	return nil
 }
 
 func (gce *GCEClient) Update(cluster *clusterv1.Cluster, goalMachine *clusterv1.Machine) error {

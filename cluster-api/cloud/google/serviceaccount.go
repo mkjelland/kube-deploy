@@ -33,6 +33,25 @@ const (
 	ClusterAnnotationPrefix               = "service-account-"
 )
 
+var (
+	MasterNodeRoles = []string{
+		"compute.instanceAdmin",
+		"compute.networkAdmin",
+		"compute.securityAdmin",
+		"compute.viewer",
+		"iam.serviceAccountUser",
+		"storage.admin",
+		"storage.objectViewer",
+	}
+	WorkerNodeRoles = []string{
+		"compute.viewer",
+	}
+	MachineControllerRoles = []string{
+		"compute.instanceAdmin.v1",
+		"iam.serviceAccountActor",
+	}
+)
+
 // Returns the email address of the service account that should be used
 // as the default service account for this machine
 func (gce *GCEClient) GetDefaultServiceAccountForMachine(cluster *clusterv1.Cluster, machine *clusterv1.Machine) string {
@@ -46,26 +65,14 @@ func (gce *GCEClient) GetDefaultServiceAccountForMachine(cluster *clusterv1.Clus
 // Creates a GCP service account for the master node, granted permissions
 // that allow the control plane to provision disks and networking resources
 func (gce *GCEClient) CreateMasterNodeServiceAccount(cluster *clusterv1.Cluster, initialMachines []*clusterv1.Machine) error {
-	roles := []string{
-		"compute.instanceAdmin",
-		"compute.networkAdmin",
-		"compute.securityAdmin",
-		"compute.viewer",
-		"iam.serviceAccountUser",
-		"storage.admin",
-		"storage.objectViewer",
-	}
-	_, _, err := gce.createServiceAccount(MasterNodeServiceAccountPrefix, roles, cluster, initialMachines)
+	_, _, err := gce.createServiceAccount(MasterNodeServiceAccountPrefix, MasterNodeRoles, cluster, initialMachines)
 
 	return err
 }
 
 // Creates a GCP service account for the worker node
 func (gce *GCEClient) CreateWorkerNodeServiceAccount(cluster *clusterv1.Cluster, initialMachines []*clusterv1.Machine) error {
-	roles := []string{
-		"compute.viewer",
-	}
-	_, _, err := gce.createServiceAccount(WorkerNodeServiceAccountPrefix, roles, cluster, initialMachines)
+	_, _, err := gce.createServiceAccount(WorkerNodeServiceAccountPrefix, WorkerNodeRoles, cluster, initialMachines)
 
 	return err
 }
@@ -74,11 +81,7 @@ func (gce *GCEClient) CreateWorkerNodeServiceAccount(cluster *clusterv1.Cluster,
 // permissions to manage compute instances, and stores its credentials as a
 // Kubernetes secret.
 func (gce *GCEClient) CreateMachineControllerServiceAccount(cluster *clusterv1.Cluster, initialMachines []*clusterv1.Machine) error {
-	roles := []string{
-		"compute.instanceAdmin.v1",
-		"iam.serviceAccountActor",
-	}
-	accountId, project, err := gce.createServiceAccount(MachineControllerServiceAccountPrefix, roles, cluster, initialMachines);
+	accountId, project, err := gce.createServiceAccount(MachineControllerServiceAccountPrefix, MachineControllerRoles, cluster, initialMachines);
 	if err != nil {
 		return err
 	}
@@ -144,7 +147,19 @@ func (gce *GCEClient) createServiceAccount(serviceAccountPrefix string, roles []
 	return accountId, project, nil
 }
 
+func (gce *GCEClient) DeleteMasterNodeServiceAccount(cluster *clusterv1.Cluster, machines []*clusterv1.Machine) error {
+	return gce.deleteServiceAccount(MasterNodeServiceAccountPrefix, MasterNodeRoles, cluster, machines)
+}
+
+func (gce *GCEClient) DeleteWorkerNodeServiceAccount(cluster *clusterv1.Cluster, machines []*clusterv1.Machine) error {
+	return gce.deleteServiceAccount(WorkerNodeServiceAccountPrefix, WorkerNodeRoles, cluster, machines)
+}
+
 func (gce *GCEClient) DeleteMachineControllerServiceAccount(cluster *clusterv1.Cluster, machines []*clusterv1.Machine) error {
+	return gce.deleteServiceAccount(MachineControllerServiceAccountPrefix, MachineControllerRoles, cluster, machines)
+}
+
+func (gce *GCEClient) deleteServiceAccount(serviceAccountPrefix string, roles []string, cluster *clusterv1.Cluster, machines []*clusterv1.Machine) error {
 	if len(machines) == 0 {
 		glog.Info("machine count is zero, cannot determine project for service a/c deletion")
 		return nil
@@ -157,7 +172,7 @@ func (gce *GCEClient) DeleteMachineControllerServiceAccount(cluster *clusterv1.C
 	project := projects[0]
 	var email string
 	if cluster.ObjectMeta.Annotations != nil {
-		email = cluster.ObjectMeta.Annotations[ClusterAnnotationPrefix + MachineControllerServiceAccountPrefix]
+		email = cluster.ObjectMeta.Annotations[ClusterAnnotationPrefix + serviceAccountPrefix]
 	}
 
 	if email == "" {
@@ -165,8 +180,9 @@ func (gce *GCEClient) DeleteMachineControllerServiceAccount(cluster *clusterv1.C
 		return nil
 	}
 
-	err = run("gcloud", "projects", "remove-iam-policy-binding", project, "--member=serviceAccount:"+email, "--role=roles/compute.instanceAdmin.v1")
-	err = run("gcloud", "projects", "remove-iam-policy-binding", project, "--member=serviceAccount:"+email, "--role=roles/iam.serviceAccountActor")
+	for _, role := range roles {
+		err = run("gcloud", "projects", "remove-iam-policy-binding", project, "--member=serviceAccount:"+email, "--role=roles/" + role)
+	}
 
 	if err != nil {
 		return fmt.Errorf("couldn't remove permissions to service account: %v", err)
