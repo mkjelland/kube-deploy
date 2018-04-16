@@ -44,7 +44,7 @@ var (
 		"storage.objectViewer",
 	}
 	WorkerNodeRoles = []string{
-		"compute.viewer",
+		"compute.instanceAdmin.v1",
 	}
 	MachineControllerRoles = []string{
 		"compute.instanceAdmin.v1",

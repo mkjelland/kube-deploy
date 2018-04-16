@@ -318,6 +318,7 @@ chmod a+rx /usr/bin/kubeadm
 systemctl enable docker
 systemctl start docker
 sed -i "s/KUBELET_DNS_ARGS=[^\"]*/KUBELET_DNS_ARGS=--cluster-dns=${CLUSTER_DNS_SERVER} --cluster-domain=${CLUSTER_DNS_DOMAIN}/" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+sed -i "2iEnvironment=\"KUBELET_EXTRA_ARGS=--cloud-provider=gce --cloud-config=/etc/kubernetes/pki/cloud-config\"" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 systemctl daemon-reload
 systemctl restart kubelet.service
 ` +
